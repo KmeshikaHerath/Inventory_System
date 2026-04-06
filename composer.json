@@ -1,0 +1,14 @@
+{
+    "name": "kameshika/inventory_system",
+    "autoload": {
+        "psr-4": {
+            "Kameshika\\InventorySystem\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "kameshika"
+        }
+    ],
+    "require": {}
+}
