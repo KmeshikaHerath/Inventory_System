@@ -10,5 +10,8 @@
             "name": "kameshika"
         }
     ],
-    "require": {}
+    "require": {
+        "symfony/routing": "^7.4",
+        "symfony/http-foundation": "^7.4"
+    }
 }
