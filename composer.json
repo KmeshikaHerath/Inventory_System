@@ -11,5 +11,9 @@
             "email": "kameshikajayherath@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "symfony/twig-bundle": "^7.4",
+        "symfony/routing": "^7.4",
+        "symfony/http-foundation": "^7.4"
+    }
 }
