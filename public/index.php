@@ -26,6 +26,9 @@ try {
     $controller = $parameters['_controller'];
     unset($parameters['_controller'], $parameters['_route']);
 
+   
+   
+   
     $response = call_user_func_array($controller, $parameters);
 
 } catch (ResourceNotFoundException $e) {
@@ -34,6 +37,10 @@ try {
 } catch (Exception $e) {
     $response = new Response('An error occurred: ' . $e->getMessage(), 500);
     $response->send();
+} finally {
+    // This always runs, even if an exception occurs
+    if (isset($response)) {
+        $response->prepare($request);
+        $response->send();
+    }
 }
-$response->prepare($request);
-$response->send();
