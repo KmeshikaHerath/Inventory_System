@@ -30,8 +30,10 @@ try {
 
 } catch (ResourceNotFoundException $e) {
     $response = new Response('404 Not Found', 404);
-    $response->send();
+   
 } catch (Exception $e) {
     $response = new Response('An error occurred: ' . $e->getMessage(), 500);
     $response->send();
 }
+$response->prepare($request);
+$response->send();

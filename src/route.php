@@ -5,6 +5,6 @@ use App\Controllers\HomeController;
 
 $routes = new RouteCollection(); 
 
-$routes->add('/', new Route('/',['_controller' => [HomeController::class, 'home']], [],['GET']));
+$routes->add('home', new Route('/',['_controller' => [HomeController::class, 'home']], [],['GET']));
 
 return $routes;
