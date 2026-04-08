@@ -26,9 +26,6 @@ try {
     $controller = $parameters['_controller'];
     unset($parameters['_controller'], $parameters['_route']);
 
-   
-   
-   
     $response = call_user_func_array($controller, $parameters);
 
 } catch (ResourceNotFoundException $e) {
