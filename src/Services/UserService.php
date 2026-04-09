@@ -6,23 +6,22 @@ use Symfony\Component\HttpFoundation\Request;
 
 class UserService {
     
-
-public static function registerUser($request) {  // Remove type hint or make it flexible
+public static function registerUser($request): string
+ {
     
-    // Handle both Request object and array
     if ($request instanceof Request) {
         $name = $request->request->get('name');
         $email = $request->request->get('email');
         $password = $request->request->get('password');
+        $role_id = $request->request->get('role_id');
     } else {
-        // It's an array
         $name = $request['name'] ?? null;
         $email = $request['email'] ?? null;
         $password = $request['password'] ?? null;
+        $role_id = $request['role_id'] ?? null;
     }
     
-    $user = new User();
-    $user->create($name, $email, $password);
+    (new User())->create($name, $email, $password, $role_id);
     
     return "User Registered Successfully!";
 }

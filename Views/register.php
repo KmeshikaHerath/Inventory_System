@@ -30,6 +30,7 @@
 </head>
 <body class="bg-gray-100 font-sans">
 
+
 <div class="flex justify-center items-center min-h-screen">
     <form id="registerForm" class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
 
@@ -60,16 +61,20 @@
         </div>
 
         <div class="mb-6">
-            <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Select Role</label>
-            <select id="role" name="role" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none transition">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Select Role</label>
+            <select id="role_id" name="role_id" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none transition">
                 <option value="">Select role</option>
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-                 <option value="manager">Manager</option>
-                  <option value="staff">Staff</option>
-                   <option value="customer">Customer</option>
+                     <?php if (!empty($roles)): ?>
+        <?php foreach ($roles as $role): ?>
+            <option value="<?php echo htmlspecialchars($role['id']); ?>">
+                <?php echo htmlspecialchars($role['role_name']); ?>
+        </option>
+        <?php endforeach; ?>
+    
+        <?php endif; ?>
 
             </select>
+
         </div>
 
         <button type="button" onclick="submitForm()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded w-full transition duration-200">
@@ -84,6 +89,31 @@
 
 <script>
 $(document).ready(function() {
+    $.validator.addMethod("passwordStrength", function(value, element) {
+
+        return this.optional(element) || 
+            (/[0-9]/.test(value) &&           
+             /[a-zA-Z]/.test(value) &&        
+             /[!@#$%^&*(),.?":{}|<>]/.test(value)); 
+    }, "Password must contain at number least one letter, and one special character");
+
+    $.validator.addMethod("confirmPassword", function(value, element) {
+        return value === $("#password").val();
+    }, "Passwords do not match");
+
+     $("#userForm").validate({
+        rules: {
+            role_id: {
+                required: true
+            }
+        },
+        messages: {
+            role_id: {
+                required: "Please select a role."
+            }
+        }
+    });
+
     $("#registerForm").validate({
         rules: {
             name: {
@@ -97,26 +127,42 @@ $(document).ready(function() {
             password: {
                 required: true,
                 minlength: 6,
-                maxlength: 10 
+                maxlength: 10,
+                passwordStrength: true 
+            },
+            confirm_password: { 
+                required: true,
+                confirmPassword: true 
+            },
+            role_id: {
+                required: true
             }
+            
         },
         messages: {
             name: {
                 required: "Please enter your full name",
                 minlength: "Name must be at least 2 characters"
             },
-            email: "Please enter a valid email address",
+            email: {
+                required: "Please enter your email address",
+                email: "Please enter a valid email address"
+            },
             password: {
                 required: "Please provide a password",
                 minlength: "Password must be at least 6 characters",
-                maxlength: "Password must not exceed 10 characters" 
-            }
-        },
+                maxlength: "Password must not exceed 10 characters",
+                passwordStrength: "Password must contain number at least one letter, and one special character"
+            },
+            confirm_password: {
+                required: "Please confirm your password",
+                confirmPassword: "Passwords do not match"
+            },
 
-    });
-
+        }
 });
 
+});
     function submitForm() {
         if ($("#registerForm").valid()) {
             $.ajax({
@@ -125,7 +171,7 @@ $(document).ready(function() {
                 data: $("#registerForm").serialize(),
 
                 success: function(response) {
-                    // alert("User registered successfully!");
+                
                     console.log(response);
 
                     $("#registerForm")[0].reset();
