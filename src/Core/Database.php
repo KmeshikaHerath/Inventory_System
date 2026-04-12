@@ -30,4 +30,12 @@ class Database {
      {
         return $this->connection;
     }
+
+    public function select(string $query, array $params = []): array
+    {
+        $stmt = $this->connection->prepare($query);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

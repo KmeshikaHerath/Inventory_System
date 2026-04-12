@@ -21,26 +21,16 @@ class UserController {
     }
 
     
-    public static function index(): Response {
-        // Get database connection using singleton pattern
-        $db = Database::getInstance();
-        $conn = $db->getConnection();
-        
-        $roles = [];
-        $stmt = $conn->prepare("SELECT id, role_name FROM roles");
-        $stmt->execute();
-        
-        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $roles[] = [
-                'id' => $row['id'],
-                'role_name' => $row['role_name']
-            ];
-        }
-        
-        // Pass roles data to the view
-        $html = View::render('register', ['roles' => $roles]);
-        return new Response($html);
-    }
+    public static function index(): Response 
+{
+    // Get roles via model (NOT direct DB)
+    $roles = User::getRoles();
+
+    // Pass to view
+    $html = View::render('register', ['roles' => $roles]);
+
+    return new Response($html);
+}
 
    
     public static function register(): Response

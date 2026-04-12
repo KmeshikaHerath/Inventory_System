@@ -33,4 +33,16 @@ class User {
         }
     }
 
-}
+         public static function getRoles(): array
+    {
+        $db = Database::getInstance();
+
+        $query = "SELECT id, role_name FROM roles";
+
+        return $db->select($query);
+    }
+    }
+
+    
+
+
