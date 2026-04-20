@@ -38,4 +38,9 @@ class Database {
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function __call($method, $args)
+{
+    return $this->connection->$method(...$args);
+}
 }

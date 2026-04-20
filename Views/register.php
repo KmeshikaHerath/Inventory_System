@@ -101,18 +101,6 @@ $(document).ready(function() {
         return value === $("#password").val();
     }, "Passwords do not match");
 
-     $("#userForm").validate({
-        rules: {
-            role_id: {
-                required: true
-            }
-        },
-        messages: {
-            role_id: {
-                required: "Please select a role."
-            }
-        }
-    });
 
     $("#registerForm").validate({
         rules: {
@@ -135,7 +123,8 @@ $(document).ready(function() {
                 confirmPassword: true 
             },
             role_id: {
-                required: true
+                required: true,
+                min: 1
             }
             
         },
@@ -159,10 +148,16 @@ $(document).ready(function() {
                 confirmPassword: "Passwords do not match"
             },
 
-        }
-});
+            role_id: {
+                required: "Please select a role"
+            } 
+    },
+    
+    });
 
 });
+
+
     function submitForm() {
         if ($("#registerForm").valid()) {
             $.ajax({

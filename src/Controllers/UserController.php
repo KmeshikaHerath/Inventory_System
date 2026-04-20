@@ -3,24 +3,19 @@ namespace App\Controllers;
 
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Session\Session;
 use App\Services\UserService;
 use App\Core\View;
 use Exception;
-use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use App\Models\User;
 use App\Core\Database;
+use App\Requests\RegisterRequest;
+use App\Core\Logger;
 
 class UserController {
 
-    private static function getLogger(): Logger 
-    {
-        $logger = new Logger('user_logger');
-        $logger->pushHandler(new StreamHandler(__DIR__ . '/../../app.log', Logger::DEBUG));
-        return $logger;
-    }
-
-    
     public static function index(): Response 
 {
     // Get roles via model (NOT direct DB)
@@ -33,28 +28,48 @@ class UserController {
 }
 
    
-    public static function register(): Response
+   public static function register(): Response
     {
-
         $requestData = $_POST;
-        $logger = self::getLogger();
-    
-        try {
-            $message = UserService::registerUser($requestData);
+        Logger::info('Registration attempt started for email: ' . ($requestData['email'] ?? 'unknown'));        
+        $registerRequest = new RegisterRequest();
+        
+        if (!$registerRequest->validate($requestData)) {
+            $errors = $registerRequest->getErrors();
+            $errorMessage = implode(', ', $errors);
             
-            $logger->info('User registration successful', ['email' => $requestData['email'] ?? 'unknown']);
+            Logger::warning('Registration validation failed', [
+                'errors' => $errors,
+                'email' => $requestData['email'] ?? 'unknown'
+            ]);
+            
+            return new Response(json_encode([
+                'status' => 'error',
+                'message' => $errorMessage,
+                'errors' => $errors
+            ]), 400);
+        }
+        
+
+        $validatedData = $registerRequest->getValidatedData();
+        
+        try {
+            $message = UserService::registerUser($validatedData); 
+            
+            Logger::info('User registration successful', ['email' => $validatedData['email'] ?? 'unknown']);
             
             return new Response($message);
 
         } catch (Exception $exception) { 
-            $logger->error('User registration failed', [
+            Logger::error('User registration failed', [
                 'message' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString()
             ]);
             
-            return new Response("Error: " . $exception->getMessage(), 500);
+            return new Response(json_encode([
+                'status' => 'error',
+                'message' => $exception->getMessage()
+            ]), 500);
         }
-
     }
 }
-    

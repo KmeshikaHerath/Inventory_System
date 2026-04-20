@@ -7,6 +7,8 @@ use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
+date_default_timezone_set('Asia/Colombo');
+
 // Load routes
 $routes = require __DIR__ . '/../src/route.php';
 
