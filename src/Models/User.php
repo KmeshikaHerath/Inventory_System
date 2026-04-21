@@ -8,13 +8,15 @@ use Exception;
 class User {
     private $conn; 
 
-    public function __construct() { 
+    public function __construct()
+    { 
 
     $this->conn = Database::getInstance()->getConnection(); 
     }
 
     // Create a new user in the database
-    public function create($name, $email, $password, $role_id) {
+    public function create($name, $email, $password, $role_id): bool
+    {
         $sql = "INSERT INTO users (name, email, password, role_id, create_at)
                 VALUES (:name, :email, :password, :role_id, :create_at)";
 
@@ -39,7 +41,8 @@ class User {
     }
 
     // Method to retrieve all roles from the database
-    public function getRoles(): array {
+    public function getRoles(): array 
+    {
         $query = "SELECT id, role_name FROM roles";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();

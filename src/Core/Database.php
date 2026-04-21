@@ -8,6 +8,7 @@ class Database {
     private static $instance = null;
     private $connection;
 
+    // Private constructor to prevent direct instantiation
     private function __construct() 
     {
         try {
@@ -43,7 +44,7 @@ class Database {
     }
 
     // Helper method for executing insert/update/delete queries
-    public function __call($method, $args)
+    public function __call($method, $args): mixed
     {
         return $this->connection->$method(...$args);
     }
