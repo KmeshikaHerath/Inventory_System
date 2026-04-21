@@ -3,4 +3,5 @@
 composer.lock
 package-lock.json
 /Storage/Log/app.log
+/Storage/logs/*.log
 
