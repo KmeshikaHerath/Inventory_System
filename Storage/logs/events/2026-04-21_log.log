@@ -2,3 +2,7 @@
 [2026-04-21 10:11:51] [INFO] User registration successful | Context: {"email":"cfjnijirj@hmail.com"}
 [2026-04-21 10:12:23] [INFO] Registration attempt started for email: kameshikaherath@gmail.com
 [2026-04-21 10:12:23] [WARNING] Registration validation failed | Context: {"errors":{"email":"EMAIL_EXISTS"},"email":"kameshikaherath@gmail.com"}
+[2026-04-21 10:16:45] [INFO] Registration attempt started for email: kameshika@gmail.com
+[2026-04-21 10:16:45] [WARNING] Registration validation failed | Context: {"errors":{"email":"EMAIL_EXISTS"},"email":"kameshika@gmail.com"}
+[2026-04-21 10:16:58] [INFO] Registration attempt started for email: vfhvurhefieri112@gmail.com
+[2026-04-21 10:16:58] [INFO] User registration successful | Context: {"email":"vfhvurhefieri112@gmail.com"}
