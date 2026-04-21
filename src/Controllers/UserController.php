@@ -30,8 +30,10 @@ class UserController {
    
    public static function register(): Response
     {
+        try {
         $requestData = $_POST;
-        Logger::info('Registration attempt started for email: ' . ($requestData['email'] ?? 'unknown'));        
+        Logger::info('Registration attempt started for email: ' . ($requestData['email'] ?? 'unknown'));     
+
         $registerRequest = new RegisterRequest();
         
         if (!$registerRequest->validate($requestData)) {
@@ -53,12 +55,11 @@ class UserController {
 
         $validatedData = $registerRequest->getValidatedData();
         
-        try {
-            $message = UserService::registerUser($validatedData); 
+        $message = UserService::registerUser($validatedData); 
             
-            Logger::info('User registration successful', ['email' => $validatedData['email'] ?? 'unknown']);
+        Logger::info('User registration successful', ['email' => $validatedData['email'] ?? 'unknown']);
             
-            return new Response($message);
+        return new Response($message);
 
         } catch (Exception $exception) { 
             Logger::error('User registration failed', [

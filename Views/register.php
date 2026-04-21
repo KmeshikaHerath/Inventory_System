@@ -16,6 +16,13 @@
     <!-- jQuery Validation -->
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 
+    <!-- CDN Link -->
+    <script src="https://jsdelivr.net"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
     <style>
         .error {
             color: #ef4444; 
@@ -66,9 +73,10 @@
                 <option value="">Select role</option>
                      <?php if (!empty($roles)): ?>
         <?php foreach ($roles as $role): ?>
-            <option value="<?php echo htmlspecialchars($role['id']); ?>">
-                <?php echo htmlspecialchars($role['role_name']); ?>
-        </option>
+           <option value="<?= htmlspecialchars($role['id']) ?>" 
+                    <?= ($role['id'] == ($old_role_id ?? '')) ? 'selected' : '' ?>>
+                <?= htmlspecialchars($role['role_name']) ?>
+            </option>
         <?php endforeach; ?>
     
         <?php endif; ?>
@@ -166,17 +174,39 @@ $(document).ready(function() {
                 data: $("#registerForm").serialize(),
 
                 success: function(response) {
-                
-                    console.log(response);
-
+                   // Success Popup
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Registration Successful!',
+                    text: response, // Your "User Registered Successfully!" message
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
                     $("#registerForm")[0].reset();
-                },
-                error: function(xhr) {
-                        alert("Error: " + xhr.responseText);
+                    // Optional: window.location.href = "/login";
+                });
+            },
+            error: function(xhr) {
+                let errorMsg = "Something went wrong";
+                
+                // Try to parse JSON error from Controller
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || errorMsg;
+                } catch (e) {
+                    errorMsg = xhr.responseText;
                 }
-            });
-        }
+
+                // Error Popup
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Registration Failed',
+                    text: errorMsg
+                });
+            }
+        });
     }
+}
 
 
 </script>

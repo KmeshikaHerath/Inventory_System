@@ -6,25 +6,14 @@ use Symfony\Component\HttpFoundation\Request;
 
 class UserService {
 
-    public static function registerUser($request): string
+      public static function registerUser(array $data): string
     {
-        if ($request instanceof Request) {
-            $name = $request->request->get('name');
-            $email = $request->request->get('email');
-            $password = $request->request->get('password');
-            $role_id = $request->request->get('role_id'); 
-        } else {
-            $name = $request['name'] ?? null;
-            $email = $request['email'] ?? null;
-            $password = $request['password'] ?? null;
-            $role_id = $request['role_id'] ?? null; 
-        }
+        $name = $data['name'];
+        $email = $data['email'];
+        $password = $data['password'];
+        $role_id = $data['role_id']; 
 
-    
-        if (empty($role_id)) {
-            throw new \Exception("Role is required");
-        }
-
+        // Call the instance method on the User model
         (new User())->create($name, $email, $password, $role_id);
 
         return "User Registered Successfully!";

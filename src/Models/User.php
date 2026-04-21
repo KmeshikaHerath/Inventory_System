@@ -4,24 +4,30 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 use Exception;
-use PDOException;
 
 class User {
-    private $conn;
+    private static $conn;
 
     public function __construct() {
-        $this->conn = Database::getInstance()->getConnection();
+        self::$conn = Database::getInstance()->getConnection();
     }
 
-   public function create($name, $email, $password, $role_id) {
-    try {
-        $sql = "INSERT INTO users (name, email, password, role_id, create_at)
+     // Ensure connection exists
+    private static function init() {
+        if (!self::$conn) {
+            self::$conn = Database::getInstance()->getConnection();
+        }
+    }
+
+   public static function create($name, $email, $password, $role_id) {
+        self::init();
+
+      $sql = "INSERT INTO users (name, email, password, role_id, create_at)
                 VALUES (:name, :email, :password, :role_id, :create_at)";
 
-        $stmt = $this->conn->prepare($sql);
+        $stmt = self::$conn->prepare($sql);
 
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        
         $create_at = date('Y-m-d H:i:s');
 
         return $stmt->execute([
@@ -32,34 +38,33 @@ class User {
             ':create_at' => $create_at
         ]);
 
-    } catch (Exception $e) {
-        throw new Exception("User creation failed: " . $e->getMessage());
+   if(!$success) {
+        throw new Exception("Failed to create user.");
     }
+
+    return true;
+
 }
 
     public static function getRoles(): array {
-        $db = Database::getInstance();
+        self::init();
+
         $query = "SELECT id, role_name FROM roles";
-        return $db->select($query);
+        $stmt = self::$conn->prepare($query);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
     }
 
-   public static function findByEmail($email) {
-    try {
-        $conn = Database::getInstance()->getConnection();
 
-        $sql = "SELECT u.*, r.role_name 
-                FROM users u
-                LEFT JOIN roles r ON u.role_id = r.id
-                WHERE u.email = :email
-                LIMIT 1";
+public static function findByEmail($email) {
+    self::init();
 
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([':email' => $email]);
-
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-
-    } catch (PDOException $e) {
-        die("Database Error: " . $e->getMessage());
-    }
+    $stmt = self::$conn->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    
+    return $stmt->fetch(\PDO::FETCH_ASSOC);
+} 
 }
-}
+

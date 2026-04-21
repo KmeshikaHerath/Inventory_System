@@ -35,9 +35,11 @@ class RegisterRequest
                 $this->validatedData['email'] = htmlspecialchars(trim($data['email']));
                 $existingUser = User::findByEmail($data['email']);
 
-         if ($existingUser) {
-            $this->errors['email'] = 'Email already registered';    
-}
+            if ($existingUser) {
+                $this->errors['email'] = 'Email already registered';
+            } else {
+                $this->validatedData['email'] = $data['email'];
+            }
 
         // Validate password
         if (empty($data['password'])) {
