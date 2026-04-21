@@ -2,4 +2,5 @@
 /node_modules
 composer.lock
 package-lock.json
-storage/logs/app.log
+/Storage/Log/app.log
+
