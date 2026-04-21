@@ -18,22 +18,29 @@ class UserController {
 
     public static function index(): Response 
 {
-    // Get roles via model (NOT direct DB)
-    $roles = User::getRoles();
+     
+        $userModel = new User();
 
-    // Pass to view
-    $html = View::render('register', ['roles' => $roles]);
+        
+        $roles = $userModel->getRoles();
+
+    
+        $html = View::render('register', ['roles' => $roles]);
 
     return new Response($html);
 }
 
-   
+   // New method to handle user registration
    public static function register(): Response
     {
         try {
+            //get the data from the request
         $requestData = $_POST;
+
+        // Log the registration attempt with email if available
         Logger::info('Registration attempt started for email: ' . ($requestData['email'] ?? 'unknown'));     
 
+        // Validate the request data using the RegisterRequest class
         $registerRequest = new RegisterRequest();
         
         if (!$registerRequest->validate($requestData)) {
@@ -52,7 +59,6 @@ class UserController {
             ]), 400);
         }
         
-
         $validatedData = $registerRequest->getValidatedData();
         
         $message = UserService::registerUser($validatedData); 

@@ -28,18 +28,25 @@ class RegisterRequest
 
         // Validate email
         if (empty($data['email'])) {
-             $this->errors['email'] = 'Email is required';
+            $this->errors['email'] = 'Email is required';
+
         } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             $this->errors['email'] = 'Invalid email format';
+
         } else {
-                $this->validatedData['email'] = htmlspecialchars(trim($data['email']));
-                $existingUser = User::findByEmail($data['email']);
+            $email = trim($data['email']);
+
+            // Check if email already exists in the database
+            $userModel = new User();
+            $existingUser = $userModel->findByEmail($email);
 
             if ($existingUser) {
                 $this->errors['email'] = 'Email already registered';
             } else {
-                $this->validatedData['email'] = $data['email'];
+                // sanitize only once at final storage stage
+                $this->validatedData['email'] = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
             }
+        }
 
         // Validate password
         if (empty($data['password'])) {
@@ -58,21 +65,6 @@ class RegisterRequest
             $this->validatedData['password'] = $data['password']; 
         }
 
-    
-        if (empty($data['email'])) {
-             $this->errors['email'] = 'Email is required';
-        } elseif (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-             $this->errors['email'] = 'Invalid email format';
-        } else {
-            $email = htmlspecialchars(trim($data['email']));
-            $this->validatedData['email'] = $email;
-
-            $existingUser = User::findByEmail($email);
-
-        if ($existingUser) {
-            $this->errors['email'] = 'EMAIL_EXISTS';
-        }
-    }
 
         // Validate confirm password
         if (empty($data['confirm_password'])) {
@@ -94,28 +86,33 @@ class RegisterRequest
 
         return empty($this->errors);
     }
-    }
+    
 
+    // Getters for errors and validated data
     public function getErrors(): array
     {
         return $this->errors;
     }
 
+    // Get the validated data after successful validation
     public function getValidatedData(): array
     {
         return $this->validatedData;
     }
 
+    // Helper method to get the first error message
     public function getFirstError(): ?string
     {
         return empty($this->errors) ? null : reset($this->errors);
     }
 
+    // Helper method to check if there are any errors
     public function hasError(string $field): bool
     {
         return isset($this->errors[$field]);
     }
 
+    // Helper method to get a specific error message for a field
     public function getError(string $field): ?string
     {
         return $this->errors[$field] ?? null;

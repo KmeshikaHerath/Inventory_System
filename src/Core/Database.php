@@ -18,6 +18,7 @@ class Database {
         }
     }
 
+    // Singleton instance retrieval
     public static function getInstance(): Database
      {
         if (self::$instance == null) {
@@ -26,11 +27,13 @@ class Database {
         return self::$instance;
     }
 
+    // Get the PDO connection
     public function getConnection(): PDO
      {
         return $this->connection;
     }
 
+    // Helper method for executing select queries
     public function select(string $query, array $params = []): array
     {
         $stmt = $this->connection->prepare($query);
@@ -39,8 +42,9 @@ class Database {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    // Helper method for executing insert/update/delete queries
     public function __call($method, $args)
-{
-    return $this->connection->$method(...$args);
-}
+    {
+        return $this->connection->$method(...$args);
+    }
 }

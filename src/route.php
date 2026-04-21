@@ -5,6 +5,7 @@ use App\Controllers\HomeController;
 use App\Controllers\UserController;
 use App\Controllers\LoginController;
 
+
 $routes = new RouteCollection(); 
 
 $routes->add('home', new Route('/',['_controller' => [HomeController::class, 'home']], [],['GET']));
