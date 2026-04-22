@@ -101,7 +101,7 @@
                 
                 
                 <p class="mt-4 text-center text-sm text-gray-600">
-                    Already have an account? <a href="#" class="text-blue-500 hover:underline">Log in</a>
+                    Already have an account? <a href="/login" class="text-blue-500 hover:underline">Log in</a>
                 </p>
             </form>
         </div>
@@ -200,8 +200,7 @@
                             timer: 2000,
                             showConfirmButton: false
                         }).then(() => {
-                            $("#registerForm")[0].reset();
-                            // Optional: window.location.href = "/login";
+                             window.location.href = "/dashboard";
                         });
                     },
                     // Handle AJAX errors
