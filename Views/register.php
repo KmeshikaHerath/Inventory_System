@@ -16,9 +16,6 @@
         <!-- jQuery Validation -->
         <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
 
-        <!-- CDN Link -->
-        <script src="https://jsdelivr.net"></script>
-
         <!-- SweetAlert2 -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -97,21 +94,20 @@
 
                 </div>
 
-                    /* Submit Button */
+                
                 <button type="button" onclick="submitForm()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded w-full transition duration-200">
                     Register
                 </button>
                 
-                // Link to login page
+                
                 <p class="mt-4 text-center text-sm text-gray-600">
                     Already have an account? <a href="#" class="text-blue-500 hover:underline">Log in</a>
                 </p>
             </form>
         </div>
 
-        // JavaScript for form validation and submission
         <script>
-        $(document).ready(function(): void{
+        $(document).ready(function(){
             $.validator.addMethod("passwordStrength", function(value, element) {
 
                 // Check for at least one letter, one number, and one special character
@@ -186,7 +182,7 @@
 
 
             // Function to handle form submission via AJAX
-            function submitForm(): void 
+            function submitForm() 
             {
                 if ($("#registerForm").valid()) {
                     $.ajax({
@@ -194,7 +190,7 @@
                         type: "POST",
                         data: $("#registerForm").serialize(),
 
-                        success: function(response): void 
+                        success: function(response)
                         {
                         // Success Popup
                         Swal.fire({
@@ -209,7 +205,7 @@
                         });
                     },
                     // Handle AJAX errors
-                    error: function(xhr): void 
+                    error: function(xhr)
                     {
                         let errorMsg = "Something went wrong";
                         

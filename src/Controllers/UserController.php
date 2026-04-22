@@ -18,13 +18,9 @@ class UserController {
 
     public static function index(): Response 
 {
-     
-        $userModel = new User();
-
-        
+        $userModel = new User();    
         $roles = $userModel->getRoles();
 
-    
         $html = View::render('register', ['roles' => $roles]);
 
     return new Response($html);
@@ -58,7 +54,7 @@ class UserController {
                 'errors' => $errors
             ]), 400);
         }
-        
+
         $validatedData = $registerRequest->getValidatedData();
         
         $message = UserService::registerUser($validatedData); 

@@ -10,14 +10,25 @@ class Database {
 
     // Private constructor to prevent direct instantiation
     private function __construct() 
-    {
-        try {
-            $this->connection = new PDO("mysql:host=localhost;dbname=inventory_db", "root", "");
-            $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            die("DB Connection failed: " . $e->getMessage());
-        }
+{
+    try {
+        $host = $_ENV['DB_HOST'];
+        $dbname = $_ENV['DB_NAME'];
+        $user = $_ENV['DB_USER'];
+        $pass = $_ENV['DB_PASS'];
+
+        $this->connection = new PDO(
+            "mysql:host=$host;dbname=$dbname",
+            $user,
+            $pass
+        );
+
+        $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    } catch (PDOException $e) {
+        die("DB Connection failed: " . $e->getMessage());
     }
+}
 
     // Singleton instance retrieval
     public static function getInstance(): Database
