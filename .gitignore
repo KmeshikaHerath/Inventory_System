@@ -4,4 +4,4 @@ composer.lock
 package-lock.json
 /Storage/Log/app.log
 /Storage/logs/events/*.log
-
+.env
