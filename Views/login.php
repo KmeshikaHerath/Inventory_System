@@ -68,7 +68,7 @@
  *  - SweetAlert notifications
  *  - Cookie-based email remember feature
  */
-$(document).ready(function () {
+    $(document).ready(function () {
 
     /**
      * ===============================
@@ -134,11 +134,11 @@ $(document).ready(function () {
                         Swal.fire({
                             icon: 'success',
                             title: 'Login Successful',
-                            text: res.message,
+                            text: res.message || 'Redirecting...',
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
-                            window.location.href = "/dashboard";
+                            window.location.href = res.redirect;
                         });
 
                     } else {
@@ -146,7 +146,7 @@ $(document).ready(function () {
                         Swal.fire({
                             icon: 'error',
                             title: 'Login Failed',
-                            text: res.message
+                            text: res.message || 'Invalid credentials'
                         });
                     }
                 },

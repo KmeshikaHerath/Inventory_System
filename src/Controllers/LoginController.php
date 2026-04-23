@@ -18,30 +18,26 @@ use App\Core\Database;
  * Login Controller
  * Handles HTTP requests only (NO business logic here)
  */
+
 class LoginController
 {
 
-    public static function showLoginForm() : Response
-    {
-            $userModel = new User();
-
-            // Optional: remember email from cookie
-            $rememberedEmail = $_COOKIE['remember_email'] ?? '';
-
-            $html = View::render('login', ['email' => $rememberedEmail]);
-
-            return new Response($html);
-    }
-        
     /**
-    * Handle login request (web form)
-    */
-
-    /**
-     * Handle login request
-     *
+     * Handle login request (web form)
      * @return Response
      */
+    public static function showLoginForm(): Response
+    {
+        $userModel = new User();
+
+        // Optional: remember email from cookie
+        $rememberedEmail = $_COOKIE['remember_email'] ?? '';
+
+        $html = View::render('login', ['email' => $rememberedEmail]);
+
+        return new Response($html);
+    }
+
     public static function login(): Response
     {
         try {
@@ -56,7 +52,7 @@ class LoginController
             if (!$validator->validate($requestData)) {
                 $errors = $validator->errors();
 
-                Logger::warning('Login validation failed', ['email' => $requestData['email'] ?? 'unknown','errors' => $errors]);
+                Logger::warning('Login validation failed', ['email' => $requestData['email'] ?? 'unknown', 'errors' => $errors]);
 
                 return new Response(json_encode([
                     'status' => 'error',
@@ -86,11 +82,11 @@ class LoginController
                 ]);
             }
 
-            return new Response(
-                json_encode($result),
-                $result['code']
-            );
-
+            return new Response(json_encode([
+                'status' => 'success',
+                'redirect' => '/dashboard'
+            ]), 200);
+            
         } catch (\Exception $e) {
 
             // Log full exception details
