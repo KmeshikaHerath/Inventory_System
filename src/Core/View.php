@@ -20,5 +20,8 @@ class View
         ob_start();
         include $file;
         return ob_get_clean();
+
+         // load layout
+        include __DIR__ . "/../Views/layouts/main.php";
     }
 }
