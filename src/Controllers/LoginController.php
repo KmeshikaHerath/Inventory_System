@@ -3,16 +3,12 @@
 namespace App\Controllers;
 
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Session\Session;
 use Exception;
 use App\Services\LoginService;
 use App\Requests\LoginRequest;
 use App\Models\User;
 use App\Core\View;
 use App\Core\Logger;
-use App\Core\Database;
 
 /**
  * Login Controller
@@ -86,7 +82,7 @@ class LoginController
                 'status' => 'success',
                 'redirect' => '/dashboard'
             ]), 200);
-            
+
         } catch (\Exception $e) {
 
             // Log full exception details

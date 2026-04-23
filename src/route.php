@@ -5,6 +5,7 @@ use App\Controllers\HomeController;
 use App\Controllers\UserController;
 use App\Controllers\LoginController;
 use App\Controllers\DashboardController;
+use App\Controllers\LogoutController;
 
 
 $routes = new RouteCollection(); 
@@ -22,5 +23,7 @@ $routes->add('login_form', new Route('/login', ['_controller' => [LoginControlle
 $routes->add('login_submit', new Route('/login_user', ['_controller' => [LoginController::class, 'login']], [], [], '', [], ['POST']));
 
 $routes->add('dashboard', new Route('/dashboard', ['_controller' => [DashboardController::class, 'index']], [], ['GET']));
+
+$routes->add('logout', new Route( '/logout', ['_controller' => [LogoutController::class, 'logout']], [],['GET']));
 
 return $routes;

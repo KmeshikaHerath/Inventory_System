@@ -2,15 +2,10 @@
 namespace App\Controllers;
 
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Session\Session;
 use App\Services\UserService;
 use App\Core\View;
 use Exception;
-use Monolog\Handler\StreamHandler;
 use App\Models\User;
-use App\Core\Database;
 use App\Requests\RegisterRequest;
 use App\Core\Logger;
 
