@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Exception;
 use App\Services\LoginService;
 use App\Requests\LoginRequest;
@@ -82,7 +84,6 @@ class LoginController
                 'status' => 'success',
                 'redirect' => '/dashboard'
             ]), 200);
-
         } catch (\Exception $e) {
 
             // Log full exception details
@@ -96,6 +97,56 @@ class LoginController
                 'status' => 'error',
                 'message' => 'Internal Server Error'
             ]), 500);
+        }
+    }
+
+    /**
+     * Handles user logout process including session destruction
+     * and logging logout activity.
+     */
+
+    /**
+     * Logout the currently authenticated user
+     *
+     * @return Response
+     */
+    public static function logout(): Response
+    {
+        try {
+            $session = new Session();
+            $session->start();
+
+            // Get user info before destroying session (for logging)
+            $user = $session->get('user');
+
+            if ($user) {
+                Logger::info("User logout successful", [
+                    'user_id' => $user['id'] ?? null,
+                    'email' => $user['email'] ?? null
+                ]);
+            } else {
+                Logger::warning("Logout attempted without active session");
+            }
+
+            // Invalidate session (secure logout)
+            $session->invalidate();
+
+            // Redirect to login page
+            return new RedirectResponse('/login');
+        } catch (Exception $e) {
+
+            // Log error with details
+            Logger::error("Logout failed", [
+                'error_message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            // Return safe response
+            return new Response(
+                "Something went wrong during logout",
+                500
+            );
         }
     }
 }
