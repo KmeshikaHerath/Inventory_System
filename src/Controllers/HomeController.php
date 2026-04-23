@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use App\Core\View; 
 
 class HomeController
@@ -21,4 +22,5 @@ class HomeController
 
         return new Response($html);
     }
- }
+
+}
