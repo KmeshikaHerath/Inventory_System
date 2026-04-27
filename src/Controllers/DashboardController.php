@@ -31,7 +31,7 @@ class DashboardController
 
             $user = $_SESSION['user'];
 
-            $html = View::render('dashboard', ['user' => $user]);
+            $html = View::render('dashboard', ['user' => $user], true);
 
             return new Response($html);
         } catch (\Exception $e) {

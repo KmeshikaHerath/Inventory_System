@@ -6,6 +6,7 @@ use App\Controllers\HomeController;
 use App\Controllers\UserController;
 use App\Controllers\LoginController;
 use App\Controllers\DashboardController;
+use App\Controllers\ProductController;
 
 $routes = new RouteCollection();
 
@@ -24,5 +25,22 @@ $routes->add('login_submit', new Route('/login_user', ['_controller' => [LoginCo
 $routes->add('dashboard', new Route('/dashboard', ['_controller' => [DashboardController::class, 'index']], [], ['GET']));
 
 $routes->add('logout', new Route('/logout', ['_controller' => [LoginController::class, 'logout']], [], ['GET']));
+
+// View page
+$routes->add('products', new Route('/products',['_controller' => [ProductController::class, 'index']],[],[],'',[],['GET']));
+
+$routes->add('store_product', new Route('/products/store',['_controller' => [ProductController::class, 'store']],[],[],'',[],['POST']));
+
+// Paginate (AJAX)
+$routes->add('products_paginate', new Route('/products/paginate',['_controller' => [ProductController::class, 'paginate']],[],[],'',[],['GET']));
+
+// Delete (AJAX)
+$routes->add('delete_product', new Route('/products/delete',['_controller' => [ProductController::class, 'delete']],[],[],'',[],['POST']));
+
+// Get single product (for edit modal)
+$routes->add('get_product', new Route('/products/get',['_controller' => [ProductController::class, 'get']],[],[],'',[],['GET']));
+
+// Update
+$routes->add('update_product', new Route('/products/update',['_controller' => [ProductController::class, 'update']],[],[],'',[],['POST']));
 
 return $routes;

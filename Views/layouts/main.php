@@ -25,12 +25,13 @@
 
         <div class="relative">
             <button id="userBtn" class="bg-blue-700 px-4 py-2 rounded">
+                <?php $user = $_SESSION['user'] ?? null; ?>
                 👤 <?= $user['name'] ?? 'User' ?>
             </button>
 
             <div id="dropdown" class="hidden absolute right-0 mt-2 bg-white text-black rounded shadow w-32">
                 <a href="/dashboard" class="block px-4 py-2 hover:bg-gray-200">Dashboard</a>
-                <a href="/logout" class="block px-4 py-2 hover:bg-red-200 text-red-600">Logout</a>
+                <a href="/logout" id="logoutBtn" class="block px-4 py-2 hover:bg-red-200 text-red-600">Logout</a>
             </div>
         </div>
     </div>
@@ -68,17 +69,39 @@
 
     </div>
 
-    <script>
-        $("#userBtn").click(function() {
-            $("#dropdown").toggle();
-        });
+   <!-- JS -->
+<script>
+$(document).ready(function () {
 
-        $(document).click(function(e) {
-            if (!$(e.target).closest("#userBtn").length) {
-                $("#dropdown").hide();
+    $("#userBtn").on("click", function (e) {
+        e.stopPropagation();
+        $("#dropdown").toggleClass("hidden");
+    });
+
+    $(document).on("click", function () {
+        $("#dropdown").addClass("hidden");
+    });
+
+    // Logout (SAFE FIX - always works)
+    $(document).on("click", "#logoutBtn", function (e) {
+        e.preventDefault();
+
+        Swal.fire({
+            title: 'Logout?',
+            text: "Are you sure you want to logout?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Logout',
+            cancelButtonText: 'Stay'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "/logout";
             }
         });
-    </script>
+    });
+
+});
+</script>
 
 </body>
 

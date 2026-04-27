@@ -6,6 +6,7 @@ use App\Core\Logger;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Exception;
+use App\Models\Permission;
 
 class LoginService
 {
@@ -44,6 +45,10 @@ class LoginService
                 'role'  => $user['role_id']
             ];
 
+             $permissionModel = new Permission();
+             $permissions = $permissionModel->getByRole($user['role_id']);
+             $_SESSION['permissions'] = $permissions;
+
             // Remember me
             self::handleRememberMe($email, $remember);
 
@@ -52,6 +57,7 @@ class LoginService
             return [
                 "status"  => "success",
                 "message" => "Login successful",
+                "user"    => $user,
                 "role"    => $user['role_id'],
                 "code"    => 200
             ];

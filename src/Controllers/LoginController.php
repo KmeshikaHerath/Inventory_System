@@ -11,28 +11,14 @@ use App\Requests\LoginRequest;
 use App\Models\User;
 use App\Core\View;
 use App\Core\Logger;
-
-/**
- * Login Controller
- * Handles HTTP requests only (NO business logic here)
- */
+use App\Models\Permission;
 
 class LoginController
 {
-
-    /**
-     * Handle login request (web form)
-     * @return Response
-     */
     public static function showLoginForm(): Response
     {
-        $userModel = new User();
-
-        // Optional: remember email from cookie
         $rememberedEmail = $_COOKIE['remember_email'] ?? '';
-
-        $html = View::render('login', ['email' => $rememberedEmail]);
-
+        $html = View::render('login', ['email' => $rememberedEmail], false);
         return new Response($html);
     }
 
@@ -40,16 +26,13 @@ class LoginController
     {
         try {
             $requestData = $_POST;
-
-            // Log incoming request (safe data only)
+            
             Logger::info('Login attempt started', ['email' => $requestData['email'] ?? 'unknown']);
 
             $validator = new LoginRequest();
 
-            // Validation check
             if (!$validator->validate($requestData)) {
                 $errors = $validator->errors();
-
                 Logger::warning('Login validation failed', ['email' => $requestData['email'] ?? 'unknown', 'errors' => $errors]);
 
                 return new Response(json_encode([
@@ -61,32 +44,54 @@ class LoginController
 
             $data = $validator->validated();
 
-            // Attempt login
+            // Attempt login - make sure this returns user data
             $result = LoginService::attemptLogin(
                 $data['email'],
                 $data['password'],
                 $data['remember'] ?? false
             );
 
-            // Log result based on status
             if ($result['status'] === 'success') {
-                Logger::info('Login successful', [
-                    'email' => $data['email']
+                // Start session if not already started
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                
+                // Get user data from login result
+                $user = $result['user']; // Make sure LoginService returns user array
+                
+                // Set session data
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['role_id'] = $user['role_id'];
+                
+                // Load permissions
+                $permissionModel = new Permission();
+                $permissions = $permissionModel->getByRole($user['role_id']);             
+                $_SESSION['permissions'] = $permissions;
+               
+                // Debug - log what was stored
+                Logger::info('Session data stored', [
+                    'user_id' => $_SESSION['user_id'],
+                    'role_id' => $_SESSION['role_id'],
+                    'permissions' => $permissions
                 ]);
+                
+                return new Response(json_encode([
+                    'status' => 'success',
+                    'redirect' => '/dashboard'
+                ]), 200);
             } else {
                 Logger::warning('Login failed', [
                     'email' => $data['email'],
                     'message' => $result['message'] ?? 'Unknown error'
                 ]);
+                
+                return new Response(json_encode([
+                    'status' => 'error',
+                    'message' => $result['message'] ?? 'Login failed'
+                ]), 401);
             }
-
-            return new Response(json_encode([
-                'status' => 'success',
-                'redirect' => '/dashboard'
-            ]), 200);
         } catch (\Exception $e) {
-
-            // Log full exception details
             Logger::error('Login exception occurred', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -100,23 +105,12 @@ class LoginController
         }
     }
 
-    /**
-     * Handles user logout process including session destruction
-     * and logging logout activity.
-     */
-
-    /**
-     * Logout the currently authenticated user
-     *
-     * @return Response
-     */
     public static function logout(): Response
     {
         try {
             $session = new Session();
             $session->start();
 
-            // Get user info before destroying session (for logging)
             $user = $session->get('user');
 
             if ($user) {
@@ -128,21 +122,15 @@ class LoginController
                 Logger::warning("Logout attempted without active session");
             }
 
-            // Invalidate session (secure logout)
             $session->invalidate();
-
-            // Redirect to login page
             return new RedirectResponse('/login');
         } catch (Exception $e) {
-
-            // Log error with details
             Logger::error("Logout failed", [
                 'error_message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
 
-            // Return safe response
             return new Response(
                 "Something went wrong during logout",
                 500
