@@ -20,7 +20,11 @@
   "dependencies": {
     "jquery": "^4.0.0",
     "jquery-validation": "^1.22.1",
-    "sweetalert2": "^11.26.24",
-    "tailwindcss": "^4.2.2"
+    "sweetalert2": "^11.26.24"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.12",
+    "tailwindcss": "^4.2.4"
   }
 }

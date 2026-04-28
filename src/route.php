@@ -43,4 +43,5 @@ $routes->add('get_product', new Route('/products/get',['_controller' => [Product
 // Update
 $routes->add('update_product', new Route('/products/update',['_controller' => [ProductController::class, 'update']],[],[],'',[],['POST']));
 
+$routes->add('restore_product',new Route('/products/restore',['_controller' => [ProductController::class, 'restore']],[],[],'',[],['POST']));
 return $routes;

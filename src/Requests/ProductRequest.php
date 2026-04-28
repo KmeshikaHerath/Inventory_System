@@ -6,11 +6,15 @@ use Exception;
 
 class ProductRequest
 {
-    /**
-     * Validate product data
+     /**
+     * Validate product data + image
+     *
+     * @param array $data
+     * @param array|null $file
+     * @return bool
      * @throws Exception
      */
-    public static function validate(array $data): bool
+    public static function validate(array $data, ?array $file = null): bool
     {
         try {
 
@@ -45,6 +49,44 @@ class ProductRequest
             // OPTIONAL DESCRIPTION
             if (!empty($data['description']) && strlen($data['description']) > 500) {
                 throw new Exception("Description cannot exceed 500 characters");
+            }
+
+            //Image Validation
+             if ($file && !empty($file['name'])) {
+
+                // Allowed MIME types
+                $allowedMime = ['image/jpeg', 'image/png'];
+
+                // Allowed extensions
+                $allowedExt = ['jpg', 'jpeg', 'png'];
+
+                // Max size (2MB)
+                $maxSize = 2 * 1024 * 1024;
+
+                // Check upload error
+                if ($file['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception("Error uploading image");
+                }
+
+                // Check size
+                if ($file['size'] > $maxSize) {
+                    throw new Exception("Image must be less than 2MB");
+                }
+
+                // Check MIME type (REAL validation)
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $file['tmp_name']);
+
+                if (!in_array($mime, $allowedMime)) {
+                    throw new Exception("Only JPG, JPEG, PNG images are allowed");
+                }
+
+                // Check extension
+                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+                if (!in_array($ext, $allowedExt)) {
+                    throw new Exception("Invalid image file extension");
+                }
             }
 
             return true;
