@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 use Exception;
-use Symfony\Component\VarDumper\VarDumper;
 
 /**
  * Product Model
@@ -20,9 +19,19 @@ class Product
     }
 
     /**
-     * Get all products
+     * Get products with filtering, sorting and pagination.
+     *
+     * @param int $limit Number of records per page
+     * @param int $offset Pagination offset
+     * @param string $search Search keyword for product name
+     * @param float|null $min Minimum price filter
+     * @param float|null $max Maximum price filter
+     * @param string $sort Column to sort by
+     * @param string $order Sort direction (ASC|DESC)
+     * @return array List of products
      */
-    public function getAll($limit, $offset, $search, $min, $max, $sort, $order)
+
+    public function getAll(int $limit, int $offset, string $search, ?float $min, ?float $max, string $sort, string $order): array
     {
         $sql = "SELECT * FROM products WHERE deleted_at IS NULL";
         $params = [];
@@ -64,128 +73,123 @@ class Product
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
-    public function create(array $data): bool
+    /**
+     * Create a new product record.
+     *
+     * @param array $data Product data (name, price, quantity, sku, description, status, category_id)
+     * @return bool True on success, false on failure
+     */
+    public function create(array $data): int
     {
         $stmt = $this->conn->prepare("
         INSERT INTO products (name, price, quantity, sku, description, status, created_by, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
     ");
 
-        $created_at = date('Y-m-d H:i:s');
-
-        $userId = $_SESSION['user_id'] ?? null;
-
-        $status = $data['status'] ?? 'active';
-
-        return $stmt->execute([
+        $stmt->execute([
             $data['name'],
             $data['price'],
             $data['quantity'],
             $data['sku'],
             $data['description'],
-            $status,
-            $userId,
-            $created_at
+            $data['status'] ?? 'active',
+            $data['created_by']
         ]);
 
-         $productId = $pdo->lastInsertId();
-          $uploadDir = __DIR__ . "/public/images/" . $productId . "/";
-
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0775, true);
-        }
-
+        return (int)$this->conn->lastInsertId();
     }
 
-    public function paginate($page = 1, $search = '', $minPrice = null, $maxPrice = null, $status = null, $includeDeleted = false)
-    {
-
-        $limit = 10;
-        $page = max(1, (int)$page);
+    /**
+     * Paginate products with filters.
+     *
+     * @param int $page Page number
+     * @param string $search Search keyword
+     * @param string|null $minPrice Minimum price
+     * @param string|null $maxPrice Maximum price
+     * @param string|null $status Product status filter
+     * @param bool $includeDeleted Include soft-deleted records
+     * @return array Paginated result set
+     */
+    public function paginate(
+        int $page = 1,
+        string $search = '',
+        ?string $minPrice = null,
+        ?string $maxPrice = null,
+        ?string $status = null,
+        bool $includeDeleted = false,
+        int $limit = 10
+    ) {
         $offset = ($page - 1) * $limit;
+
+        $totalSql = "SELECT COUNT(*) as total FROM products WHERE deleted_at IS NULL";
+        $stmt = $this->conn->prepare($totalSql);
+        $stmt->execute();
+        $total = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         $params = [];
         $conditions = [];
 
-        // ONLY SHOW ACTIVE PRODUCTS BY DEFAULT (NOT DELETED)
         if (!$includeDeleted) {
             $conditions[] = "deleted_at IS NULL";
         }
 
-        // SEARCH
         if (!empty($search)) {
             $conditions[] = "(name LIKE :search OR sku LIKE :search)";
             $params[':search'] = '%' . trim($search) . '%';
+            $totalSearch = $params[':search'];
         }
 
-        // MIN PRICE
         if ($minPrice !== null && $minPrice !== '' && is_numeric($minPrice)) {
             $conditions[] = "price >= :minPrice";
             $params[':minPrice'] = (float)$minPrice;
         }
 
-        // MAX PRICE
         if ($maxPrice !== null && $maxPrice !== '' && is_numeric($maxPrice)) {
             $conditions[] = "price <= :maxPrice";
             $params[':maxPrice'] = (float)$maxPrice;
         }
 
-        // BUILD WHERE CLAUSE
-        $where = '';
-        if (!empty($conditions)) {
-            $where = "WHERE " . implode(' AND ', $conditions);
-        }
-
-        // COUNT QUERY
-        $countSql = "SELECT COUNT(*) as total FROM products $where";
-        $stmt = $this->conn->prepare($countSql);
-
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-
-        // STATUS FILTER (IMPORTANT FIX)
         if (!empty($status) && $status !== 'all') {
             $conditions[] = "status = :status";
             $params[':status'] = $status;
         }
 
-        $stmt->execute();
-        $total = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $where = !empty($conditions) ? "WHERE " . implode(' AND ', $conditions) : "";
 
-        // FIX PAGE OVERFLOW
-        $totalPages = max(1, ceil($total / $limit));
-        if ($page > $totalPages && $total > 0) {
-            $page = $totalPages;
-            $offset = ($page - 1) * $limit;
+        $countSql = "SELECT COUNT(*) as total FROM products $where";
+        $stmt = $this->conn->prepare($countSql);
+
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
         }
 
-        // DATA QUERY
+        $stmt->execute();
+        $filtered = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
         $sql = "SELECT * FROM products $where ORDER BY id ASC LIMIT :limit OFFSET :offset";
         $stmt = $this->conn->prepare($sql);
 
-        // Bind dynamic params
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
         }
 
-        // Bind limit and offset as integers
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         return [
-            "data" => $data,
-            "total" => $total,
-            "page" => $page,
-            "limit" => $limit
+            "recordsTotal" => $total,
+            "recordsFiltered" => $filtered,
+            "data" => $data
         ];
     }
 
     public function findById($id, $includeDeleted = false)
     {
+        if (!is_numeric($id)) return null;
+
         $sql = "SELECT * FROM products WHERE id = :id";
 
         if (!$includeDeleted) {
@@ -196,12 +200,10 @@ class Product
         $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
         $stmt->execute();
 
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result ?: null;
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function delete($id, $userId = null)
+    public function delete($id)
     {
 
         if (session_status() === PHP_SESSION_NONE) {
@@ -221,52 +223,37 @@ class Product
     }
 
     /**
-     * Update product
+     * Update an existing product.
+     *
+     * @param int $id Product ID
+     * @param array $data Updated product data
+     * @return bool True on success, false on failure
      */
-    public function update($id, $data): bool
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
 
-        $userId = $_SESSION['user_id'] ?? null;
-        $updated_at = date('Y-m-d H:i:s');
-
-        $stmt = $this->conn->prepare("
-        UPDATE products 
-        SET name = ?, 
-            price = ?, 
-            quantity = ?, 
-            sku = ?, 
-            description = ?, 
-            updated_by = ?, 
-            updated_at = ?
-        WHERE id = ?
-    ");
-
-        return $stmt->execute([
-            $data['name'],
-            $data['price'],
-            $data['quantity'],
-            $data['sku'],
-            $data['description'],
-            $userId,
-            $updated_at,
-            $id
-        ]);
-    }
-    public function restore($id)
+    public function update($id, $data)
     {
         $stmt = $this->conn->prepare("
-        UPDATE products 
-        SET deleted_at = NULL,
-            status = 'active'
+        UPDATE products SET
+            name = :name,
+            price = :price,
+            quantity = :quantity,
+            sku = :sku,
+            description = :description,
+            status = :status,
+            image_path = COALESCE(:image_path, image_path)
         WHERE id = :id
     ");
 
-        $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
-
-        return $stmt->execute();
+        return $stmt->execute([
+            ':name' => $data['name'],
+            ':price' => $data['price'],
+            ':quantity' => $data['quantity'],
+            ':sku' => $data['sku'],
+            ':description' => $data['description'],
+            ':status' => $data['status'],
+            ':image_path' => $data['image_path'] ?? null,
+            ':id' => $id
+        ]);
     }
 
     public function getActiveProducts(): array

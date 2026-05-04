@@ -7,14 +7,16 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
-<?php $permissions = $_SESSION['permissions'] ?? []; ?>
+<?php
+$permissions = $_SESSION['permissions'] ?? [];
+?>
 
 <script>
-const permissions = <?= json_encode($permissions ?? []) ?>;
+    // SAFE permissions (IMPORTANT FIX)
+    const permissions = <?= json_encode($permissions ?? []) ?> || [];
 
-let table;
-let showDeleted = false;
-let onlyActive = false;
+    let table;
+    let showDeleted = false;
 </script>
 
 <div class="max-w-7xl mx-auto p-6">
@@ -23,38 +25,30 @@ let onlyActive = false;
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Products</h1>
 
-        <div class="flex gap-2">
-
-            <?php if (in_array('products_create', $permissions)): ?>
-                <button onclick="openCreateModal()"
-                    class="bg-blue-600 text-white px-4 py-2 rounded">
-                    + Add Product
-                </button>
-            <?php endif; ?>
-
-        </div>
+        <?php if (in_array('products_create', $permissions)): ?>
+            <button onclick="openCreateModal()"
+                class="bg-blue-600 text-white px-4 py-2 rounded">
+                + Add Product
+            </button>
+        <?php endif; ?>
     </div>
 
     <!-- FILTERS -->
     <div class="bg-white p-4 rounded shadow mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
 
-        <input type="text" id="search" placeholder="Search product..." class="border p-2 rounded">
+        <input type="text" id="search" placeholder="Search..." class="border p-2 rounded">
 
         <input type="number" id="minPrice" placeholder="Min Price" class="border p-2 rounded">
 
         <input type="number" id="maxPrice" placeholder="Max Price" class="border p-2 rounded">
 
-        <select id="status" class="border p-2 rounded">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
         </select>
 
     </div>
 
     <!-- TABLE -->
     <div class="bg-white shadow rounded overflow-x-auto">
-        <table id="productsTable" class="w-full text-sm text-left">
+        <table id="productsTable" class="w-full text-sm">
             <thead class="bg-gray-200">
                 <tr>
                     <th class="p-3">ID</th>
@@ -95,11 +89,22 @@ let onlyActive = false;
             <input type="text" id="sku" name="sku" placeholder="SKU"
                 class="w-full border p-2 mb-2 rounded">
 
-            <select id="statusSelect" name="status"
-                class="w-full border p-2 mb-2 rounded">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-            </select>
+            <input type="hidden" name="status" id="statusHidden" value="active">
+
+            <div class="flex items-center gap-2 mb-2">
+                <label class="font-medium">Status</label>
+
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input id="statusToggle" type="checkbox"
+                        class="peer appearance-none w-10 h-5 bg-slate-100 rounded-full
+       checked:bg-blue-600 cursor-pointer transition-colors duration-300" checked>
+
+                    <label for="statusToggle"
+                        class="absolute top-0 left-0 w-5 h-5 bg-white rounded-full border border-slate-300 shadow-sm
+       transition-transform duration-300 peer-checked:translate-x-3 peer-checked:border-slate-800 cursor-pointer">
+                    </label>
+                </label>
+            </div>
 
             <input type="file" name="image" class="w-full border p-2 mb-2">
 
@@ -120,182 +125,234 @@ let onlyActive = false;
 </div>
 
 <script>
+    /* ================= DATA TABLE ================= */
 
-/* ================= DATA TABLE ================= */
-$(document).ready(function () {
+    $(document).ready(function() {
 
-    table = $('#productsTable').DataTable({
-        processing: true,
-        serverSide: true,
 
-        ajax: {
-            url: "/products/paginate",
-            data: function (d) {
-                d.search_custom = $('#search').val();
-                d.min_price = $('#minPrice').val();
-                d.max_price = $('#maxPrice').val();
-                d.status = $('#status').val();
-                d.deleted = showDeleted ? 1 : 0;
-                d.only_active = onlyActive ? 1 : 0;
-            }
-        },
-
-        columns: [
-            { data: 'id' },
-
-            {
-                data: 'image',
-                render: d => `<img src="${d || 'placeholder.jpg'}" class="h-10 w-10 rounded">`
-            },
-
-            { data: 'name' },
-            { data: 'sku' },
-            { data: 'price' },
-            { data: 'quantity' },
-
-            {
-                data: 'status',
-                render: d =>
-                    d === 'active'
-                        ? `<span class="text-green-600">Active</span>`
-                        : `<span class="text-red-600">Inactive</span>`
-            },
-
-            {
-                data: null,
-                render: function (data, type, row) {
-
-                    let html = '';
-
-                    if (row.deleted_at) {
-                        html += `<button onclick="restoreProduct(${row.id})" class="text-green-600">Restore</button>`;
-                    } else {
-
-                        if (permissions.includes('products_update')) {
-                            html += `<button onclick="editProduct(${row.id})" class="text-blue-600 mr-2">Edit</button>`;
-                        }
-
-                        if (permissions.includes('products_delete')) {
-                            html += `<button onclick="deleteProduct(${row.id})" class="text-red-600">Delete</button>`;
-                        }
-                    }
-
-                    return html;
-                }
-            }
-        ]
-    });
-
-    $('#search,#minPrice,#maxPrice,#status').on('keyup change', function () {
-        table.ajax.reload();
-    });
-});
-
-/* ================= MODAL ================= */
-function openCreateModal() {
-    $('#productForm')[0].reset();
-    $('#productId').val('');
-    $('#modalTitle').text('Add Product');
-
-    const modal = document.getElementById('productModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function closeModal() {
-    const modal = document.getElementById('productModal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
-
-/* close on background click */
-document.getElementById('productModal').addEventListener('click', function (e) {
-    if (e.target === this) closeModal();
-});
-
-/* ================= DELETE ================= */
-function deleteProduct(id) {
-    Swal.fire({
-        title: "Delete Product?",
-        icon: "warning",
-        showCancelButton: true
-    }).then(r => {
-        if (!r.isConfirmed) return;
-
-        fetch('/products/delete', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id })
-        })
-        .then(r => r.json())
-        .then(res => {
-            if (res.status === 'success') {
-                table.ajax.reload();
-                Swal.fire("Deleted", "", "success");
-            }
+        $('#statusToggle').on('change', function() {
+            $('#statusHidden').val(
+                $(this).is(':checked') ? 'Active' : 'Inactive'
+            );
         });
-    });
-}
+        table = $('#productsTable').DataTable({
+            processing: true,
+            serverSide: true,
 
-/* ================= RESTORE ================= */
-function restoreProduct(id) {
-    fetch('/products/restore', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ id })
-    })
-    .then(r => r.json())
-    .then(res => {
-        if (res.status === 'success') {
+            ajax: {
+                url: "/products/paginate",
+                type: "GET",
+                data: function(d) {
+                    d.search_custom = $('#search').val();
+                    d.min_price = $('#minPrice').val();
+                    d.max_price = $('#maxPrice').val();
+                    d.status = $('#status').val();
+                    d.deleted = showDeleted ? 1 : 0;
+                }
+            },
+
+            columns: [{
+                    data: 'id'
+                },
+
+                {
+                    data: 'image_path',
+                    render: function(d, type, row) {
+
+                        const img = d || `/images/uploads/products/products${row.id}.png`;
+
+                        return `<img src="${img}" class="h-10 w-10 rounded">`;
+                    }
+                },
+
+                {
+                    data: 'name'
+                },
+                {
+                    data: 'sku'
+                },
+                {
+                    data: 'price'
+                },
+                {
+                    data: 'quantity'
+                },
+
+                {
+                    data: 'status',
+                    render: function(d, type, row) {
+                        return `
+                        <button onclick="toggleStatus(${row.id})"
+                            class="${d === 'active' ? 'text-green-600' : 'text-red-600'} font-bold">
+                            ${d}
+                        </button>
+                    `;
+                    }
+                },
+
+                {
+                    data: null,
+                    orderable: false,
+                    render: function(data, type, row) {
+
+                        let html = '';
+
+                        const canUpdate = Array.isArray(permissions) && permissions.includes('products_update');
+                        const canDelete = Array.isArray(permissions) && permissions.includes('products_delete');
+
+                        if (canUpdate) {
+                            html += `
+                            <button onclick="editProduct(${row.id})"
+                                class="text-blue-600 mr-2">
+                                Edit
+                            </button>
+                        `;
+                        }
+
+                        if (canDelete) {
+                            html += `
+                            <button onclick="deleteProduct(${row.id})"
+                                class="text-red-600">
+                                Delete
+                            </button>
+                        `;
+                        }
+
+                        return html;
+                    }
+                }
+            ]
+        });
+
+        $('#search,#minPrice,#maxPrice,#status').on('keyup change', function() {
             table.ajax.reload();
-            Swal.fire("Restored", "", "success");
-        }
-    });
-}
+        });
 
-/* ================= EDIT ================= */
-function editProduct(id) {
-    fetch('/products/get?id=' + id)
-        .then(r => r.json())
-        .then(res => {
-            if (res.status === 'success') {
+    });
+
+    /* ================= MODAL ================= */
+
+    function openCreateModal() {
+        $('#productForm')[0].reset();
+        $('#productId').val('');
+        $('#modalTitle').text('Add Product');
+        $('#statusToggle').prop('checked', true);
+        $('#statusHidden').val('active');
+
+        $('#productModal').removeClass('hidden').addClass('flex');
+        openModal();
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('productModal');
+
+        // hide modal
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+
+        // reset form
+        $('#productForm')[0].reset();
+        $('#productId').val('');
+        $('#modalTitle').text('Add Product');
+
+        $('input[type="file"]').val('');
+    }
+
+    /* ================= SAVE ================= */
+
+    $('#productForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        const id = $('#productId').val();
+        const url = id ? '/products/update' : '/products/store';
+
+        fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(res => {
+
+                if (res.status === 'success') {
+                    closeModal();
+
+                    table.ajax.reload();
+                    Swal.fire("Success", "Saved successfully", "success");
+                } else {
+                    Swal.fire("Error", res.message, "error");
+                }
+            });
+    });
+
+    /* ================= EDIT ================= */
+
+    function editProduct(id) {
+
+        fetch('/products/get?id=' + id)
+            .then(async res => {
+                const text = await res.text();
+                return JSON.parse(text);
+            })
+            .then(res => {
+
+                console.log("EDIT RESPONSE:", res);
+
+                if (res.status !== 'success') {
+                    Swal.fire("Error", res.message || "Failed", "error");
+                    return;
+                }
+
                 const p = res.data;
 
-                $('#modalTitle').text('Edit Product');
                 $('#productId').val(p.id);
                 $('#name').val(p.name);
                 $('#price').val(p.price);
                 $('#quantity').val(p.quantity);
                 $('#sku').val(p.sku);
                 $('#description').val(p.description);
-                $('#statusSelect').val(p.status);
+                $('#statusToggle').prop('checked', p.status === 'active');
+                $('#statusHidden').val(p.status);
 
-                openCreateModal();
-            }
+                $('#modalTitle').text('Edit Product');
+                $('#productModal').removeClass('hidden').addClass('flex');
+            })
+            .catch(err => {
+                console.error("EDIT ERROR:", err);
+                Swal.fire("Error", "Server error", "error");
+            });
+    }
+
+    /* ================= DELETE ================= */
+
+    function deleteProduct(id) {
+
+        Swal.fire({
+            title: "Delete product?",
+            icon: "warning",
+            showCancelButton: true
+        }).then(r => {
+
+            if (!r.isConfirmed) return;
+
+            fetch('/products/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id
+                    })
+                })
+                .then(r => r.json())
+                .then(res => {
+
+                    if (res.status === 'success') {
+                        table.ajax.reload();
+                        Swal.fire("Deleted", "", "success");
+                    }
+                });
         });
-}
-
-/* ================= SAVE ================= */
-$('#productForm').on('submit', function (e) {
-    e.preventDefault();
-
-    const id = $('#productId').val();
-    const url = id ? '/products/update' : '/products/store';
-
-    fetch(url, {
-        method: 'POST',
-        body: new FormData(this)
-    })
-    .then(r => r.json())
-    .then(res => {
-        if (res.status === 'success') {
-            closeModal();
-            table.ajax.reload();
-            Swal.fire("Success", "Saved", "success");
-        } else {
-            Swal.fire("Error", res.message, "error");
-        }
-    });
-});
-
+    }
 </script>
