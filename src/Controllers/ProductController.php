@@ -8,20 +8,25 @@ use App\Services\ProductService;
 use App\Services\PermissionService;
 use App\Requests\ProductRequest;
 use Exception;
+use App\Core\Logger;
 
+/**
+ * Class ProductController
+ *
+ * Handles all product-related HTTP requests such as
+ * listing, pagination, create, update, delete, and fetch.
+ */
 class ProductController
 {
-    public function __construct()
-    {
-
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-    }
+    /**
+     * Show product listing page
+     *
+     * @return Response
+     */
 
     public static function index(): Response
     {
-        session_start();
+        Logger::info("Product index page accessed");
 
         return new Response(
             View::render('products/productview', [
@@ -30,6 +35,11 @@ class ProductController
         );
     }
 
+    /**
+     * Paginate product list (DataTables API)
+     *
+     * @return Response
+     */
     public static function paginate(): Response
     {
         try {
@@ -38,6 +48,8 @@ class ProductController
             $length = intval($_GET['length'] ?? 10);
 
             $page = ($start / $length) + 1;
+
+            Logger::info("Product pagination requested", $_GET);
 
             $service = new ProductService();
 
@@ -58,6 +70,9 @@ class ProductController
                 "data" => $result['data']
             ]), 200);
         } catch (Exception $e) {
+
+            Logger::error("Pagination failed", ['error' => $e->getMessage()]);
+
             return new Response(json_encode([
                 "status" => "error",
                 "message" => $e->getMessage()
@@ -65,6 +80,11 @@ class ProductController
         }
     }
 
+    /**
+     * Create new product
+     *
+     * @return Response
+     */
     public static function store(): Response
     {
 
@@ -80,38 +100,56 @@ class ProductController
 
             (new ProductService())->create($data, $_FILES['image'] ?? null);
 
+            Logger::info("Product created", $data);
+
             return new Response(json_encode(["status" => "success"]), 200);
         } catch (Exception $e) {
+
+            Logger::error("Product creation failed", [
+                'error' => $e->getMessage(),
+                'data' => $_POST
+            ]);
+
             return new Response(
                 json_encode([
                     "status" => "error",
                     "message" => $e->getMessage()
                 ]),
                 400,
-                ['Content-Type' => 'application/json']
             );
         }
     }
 
+    /**
+     * Update product
+     *
+     * @return Response
+     */
     public static function update(): Response
     {
 
-        session_start();
         try {
             if (!PermissionService::can('products_update')) {
                 throw new Exception("Unauthorized", 403);
             }
 
-            ProductRequest::validate($_POST, $_FILES);
-
             $id = $_POST['id'] ?? null;
 
             if (!$id) throw new Exception("Missing ID");
 
+            ProductRequest::validate($_POST, $_FILES);
+
             (new ProductService())->update($id);
+
+            Logger::warning("Product updated", ['id' => $id]);
 
             return new Response(json_encode(["status" => "success"]), 200);
         } catch (Exception $e) {
+
+            Logger::error("Product update failed", [
+                'error' => $e->getMessage(),
+                'id' => $_POST['id'] ?? null
+            ]);
             return new Response(json_encode([
                 "status" => "error",
                 "message" => $e->getMessage()
@@ -119,23 +157,37 @@ class ProductController
         }
     }
 
+    /**
+     * Delete product
+     *
+     * @return Response
+     */
     public static function delete(): Response
     {
-
-        session_start();
 
         try {
             if (!PermissionService::can('products_delete')) {
                 throw new Exception("Unauthorized", 403);
             }
 
-            $input = json_decode(file_get_contents('php://input'), true);
-            $id = $input['id'] ?? $_POST['id'] ?? null;
+            $id = $_POST['id'] ?? null;
+            if (!$id) throw new Exception("Missing ID");
 
             (new ProductService())->delete($id, $_SESSION['user_id']);
 
+            Logger::warning("Product deleted", [
+                'id' => $id,
+                'deleted_by' => $_SESSION['user_id']
+            ]);
+
             return new Response(json_encode(["status" => "success"]), 200);
         } catch (Exception $e) {
+
+            Logger::error("Product update failed", [
+                'error' => $e->getMessage(),
+                'id' => $_POST['id'] ?? null
+            ]);
+
             return new Response(json_encode([
                 "status" => "error",
                 "message" => $e->getMessage()
@@ -143,6 +195,11 @@ class ProductController
         }
     }
 
+    /**
+     * Get single product by ID
+     *
+     * @return Response
+     */
     public static function get(): Response
     {
 
@@ -160,17 +217,25 @@ class ProductController
             $product = $service->get($id);
 
             if (!$product) {
+
+                Logger::warning("Product not found", ['id' => $id]);
+
                 return new Response(json_encode([
                     "status" => "error",
                     "message" => "Product not found"
                 ]), 404);
             }
 
+            Logger::info("Product fetched", ['id' => $id]);
+
             return new Response(json_encode([
                 "status" => "success",
                 "data" => $product
             ]), 200);
         } catch (Exception $e) {
+
+            Logger::info("Product fetched", ['id' => $id]);
+
             return new Response(json_encode([
                 "status" => "error",
                 "message" => $e->getMessage()

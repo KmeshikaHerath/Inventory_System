@@ -112,14 +112,26 @@ $permissions = $_SESSION['permissions'] ?? [];
                 class="w-full border p-2 mb-2 rounded"
                 placeholder="Description"></textarea>
 
-            <button class="bg-blue-600 text-white w-full py-2 rounded">
-                Save
-            </button>
-        </form>
+            <div class="flex justify-end gap-2 mt-4">
 
-        <button onclick="closeModal()" class="mt-3 w-full text-red-500">
-            Close
-        </button>
+                <!-- Close Button -->
+                <button
+                    type="button"
+                    onclick="closeModal()"
+                    class="px-4 py-2 text-red-500 border border-red-500 rounded hover:bg-red-50">
+                    Close
+                </button>
+
+                <!-- Save Button -->
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Save
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 </div>
@@ -312,7 +324,7 @@ $permissions = $_SESSION['permissions'] ?? [];
                 $('#quantity').val(p.quantity);
                 $('#sku').val(p.sku);
                 $('#description').val(p.description);
-                
+
                 const status = (p.status || '').toLowerCase();
 
                 $('#statusToggle').prop('checked', status === 'active');
@@ -339,14 +351,12 @@ $permissions = $_SESSION['permissions'] ?? [];
 
             if (!r.isConfirmed) return;
 
+            const formData = new FormData();
+            formData.append('id', id);
+
             fetch('/products/delete', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        id
-                    })
+                    body: formData
                 })
                 .then(r => r.json())
                 .then(res => {

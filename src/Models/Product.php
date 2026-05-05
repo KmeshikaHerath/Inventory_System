@@ -233,7 +233,7 @@ class Product
     public function update($id, $data)
     {
         $data['updated_by'] = $_SESSION['user_id'];
-        
+
         $stmt = $this->conn->prepare("
         UPDATE products SET
             name = :name,
