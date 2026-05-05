@@ -6,12 +6,14 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Core\View;
 use App\Services\ProductService;
 use App\Services\PermissionService;
+use App\Requests\ProductRequest;
 use Exception;
 
 class ProductController
 {
-    private static function startSession()
+    public function __construct()
     {
+
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -19,7 +21,6 @@ class ProductController
 
     public static function index(): Response
     {
-
         session_start();
 
         return new Response(
@@ -31,9 +32,6 @@ class ProductController
 
     public static function paginate(): Response
     {
-        header('Content-Type: application/json');
-        ob_clean();
-
         try {
             $draw   = intval($_GET['draw'] ?? 1);
             $start  = intval($_GET['start'] ?? 0);
@@ -69,8 +67,8 @@ class ProductController
 
     public static function store(): Response
     {
-        self::startSession();
-        header('Content-Type: application/json');
+
+        ProductRequest::validate($_POST, $_FILES);
 
         try {
             if (!PermissionService::can('products_create')) {
@@ -83,33 +81,34 @@ class ProductController
             (new ProductService())->create($data, $_FILES['image'] ?? null);
 
             return new Response(json_encode(["status" => "success"]), 200);
-
         } catch (Exception $e) {
-
-            return new Response(json_encode([
-                "status" => "error",
-                "message" => $e->getMessage()
-            ]), 
-            400, 
-        ['Content-Type' => 'application/json']
-    );
+            return new Response(
+                json_encode([
+                    "status" => "error",
+                    "message" => $e->getMessage()
+                ]),
+                400,
+                ['Content-Type' => 'application/json']
+            );
         }
     }
 
     public static function update(): Response
     {
-        self::startSession();
-        header('Content-Type: application/json');
 
+        session_start();
         try {
             if (!PermissionService::can('products_update')) {
                 throw new Exception("Unauthorized", 403);
             }
 
+            ProductRequest::validate($_POST, $_FILES);
+
             $id = $_POST['id'] ?? null;
+
             if (!$id) throw new Exception("Missing ID");
 
-            (new ProductService())->update($id, $_POST, $_FILES['image'] ?? null);
+            (new ProductService())->update($id);
 
             return new Response(json_encode(["status" => "success"]), 200);
         } catch (Exception $e) {
@@ -122,8 +121,8 @@ class ProductController
 
     public static function delete(): Response
     {
-        self::startSession();
-        header('Content-Type: application/json');
+
+        session_start();
 
         try {
             if (!PermissionService::can('products_delete')) {
@@ -131,7 +130,7 @@ class ProductController
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
-            $id = $input['id'] ?? null;
+            $id = $input['id'] ?? $_POST['id'] ?? null;
 
             (new ProductService())->delete($id, $_SESSION['user_id']);
 
@@ -146,7 +145,6 @@ class ProductController
 
     public static function get(): Response
     {
-        header('Content-Type: application/json');
 
         try {
             $id = $_GET['id'] ?? null;

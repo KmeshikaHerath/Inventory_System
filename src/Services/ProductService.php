@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Product;
-use App\Requests\ProductRequest;
 use Exception;
 
 class ProductService
@@ -15,10 +14,9 @@ class ProductService
         $this->model = new Product();
     }
 
+
     public function create($data, $file = null)
     {
-        ProductRequest::validate($data, $file);
-
         $id = $this->model->create($data);
 
         if ($file && $file['name']) {
@@ -26,27 +24,66 @@ class ProductService
         }
     }
 
-    public function update($id, $data, $file = null)
+
+    public function update($id)
     {
-        ProductRequest::validate($data, $file);
+        $data = $_POST;
+        $file = $_FILES['image'] ?? null;
+
+        $imagePath = __DIR__ . "/../../public/Images/uploads/products/product{$id}.png";
+
+        // Check if old image exists
+        $hasOldImage = file_exists($imagePath);
+
+        //  No new image uploaded
+        if (!$file || $file['error'] === UPLOAD_ERR_NO_FILE) {
+
+            if (!$hasOldImage) {
+                return [
+                    "status" => "error",
+                    "message" => "Image is required"
+                ];
+            }
+
+        }
+
+        // New image uploaded
+        else {
+            // delete old image if exists
+            if ($hasOldImage) {
+                unlink($imagePath);
+            }
+
+            // upload new image
+            $this->uploadImage($file, $id);
+        }
 
         $this->model->update($id, $data);
+
+        return [
+            "status" => "success",
+            "message" => "Product updated successfully"
+        ];
     }
+
 
     public function delete($id, $userId)
     {
         return $this->model->delete($id, $userId);
     }
 
+
     public function get($id)
     {
         return $this->model->findById($id);
     }
 
+
     public function paginate($page, $search, $min, $max, $status, $deleted, $limit)
     {
         return $this->model->paginate($page, $search, $min, $max, $status, $deleted, $limit);
     }
+
 
     private function uploadImage($file, $id)
     {
@@ -59,7 +96,7 @@ class ProductService
 
         $path = $dir . '/' . $name;
 
-        move_uploaded_file($file['tmp_name'], $path);
+        move_uploaded_file($file['tmp_name'],"{$dir}{$name}");
 
         return "/Images/uploads/products/{$name}";
     }

@@ -5,3 +5,4 @@ package-lock.json
 /Storage/Log/app.log
 /Storage/logs/events/*.log
 .env
+public/Images/uploads/

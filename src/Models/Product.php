@@ -232,6 +232,8 @@ class Product
 
     public function update($id, $data)
     {
+        $data['updated_by'] = $_SESSION['user_id'];
+        
         $stmt = $this->conn->prepare("
         UPDATE products SET
             name = :name,
@@ -239,7 +241,9 @@ class Product
             quantity = :quantity,
             sku = :sku,
             description = :description,
-            status = :status
+            status = :status,
+            updated_at = :updated_at,
+            updated_by = :updated_by
         WHERE id = :id
     ");
 
@@ -250,6 +254,8 @@ class Product
             ':sku' => $data['sku'],
             ':description' => $data['description'],
             ':status' => $data['status'],
+            ':updated_at' => date('Y-m-d H:i:s'),
+            ':updated_by' => $data['updated_by'],
             ':id' => $id
         ]);
     }
