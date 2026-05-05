@@ -132,7 +132,7 @@ $permissions = $_SESSION['permissions'] ?? [];
 
         $('#statusToggle').on('change', function() {
             $('#statusHidden').val(
-                $(this).is(':checked') ? 'Active' : 'Inactive'
+                $(this).is(':checked') ? 'active' : 'inactive'
             );
         });
         table = $('#productsTable').DataTable({
@@ -159,7 +159,7 @@ $permissions = $_SESSION['permissions'] ?? [];
                     data: 'image_path',
                     render: function(d, type, row) {
 
-                        const img = d || `/images/uploads/products/products${row.id}.png`;
+                        const img = d || `/Images/uploads/products/products${row.id}.png`;
 
                         return `<img src="${img}" class="h-10 w-10 rounded">`;
                     }
@@ -312,8 +312,11 @@ $permissions = $_SESSION['permissions'] ?? [];
                 $('#quantity').val(p.quantity);
                 $('#sku').val(p.sku);
                 $('#description').val(p.description);
-                $('#statusToggle').prop('checked', p.status === 'active');
-                $('#statusHidden').val(p.status);
+                
+                const status = (p.status || '').toLowerCase();
+
+                $('#statusToggle').prop('checked', status === 'active');
+                $('#statusHidden').val(status === 'active' ? 'active' : 'inactive');
 
                 $('#modalTitle').text('Edit Product');
                 $('#productModal').removeClass('hidden').addClass('flex');

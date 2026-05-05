@@ -239,8 +239,7 @@ class Product
             quantity = :quantity,
             sku = :sku,
             description = :description,
-            status = :status,
-            image_path = COALESCE(:image_path, image_path)
+            status = :status
         WHERE id = :id
     ");
 
@@ -251,7 +250,6 @@ class Product
             ':sku' => $data['sku'],
             ':description' => $data['description'],
             ':status' => $data['status'],
-            ':image_path' => $data['image_path'] ?? null,
             ':id' => $id
         ]);
     }

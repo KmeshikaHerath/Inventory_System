@@ -23,17 +23,12 @@ class ProductService
 
         if ($file && $file['name']) {
             $path = $this->uploadImage($file, $id);
-            $this->model->update($id, array_merge($data, ['image_path' => $path]));
         }
     }
 
     public function update($id, $data, $file = null)
     {
         ProductRequest::validate($data, $file);
-
-        if ($file && $file['name']) {
-            $data['image_path'] = $this->uploadImage($file, $id);
-        }
 
         $this->model->update($id, $data);
     }
@@ -44,9 +39,9 @@ class ProductService
     }
 
     public function get($id)
-{
-    return $this->model->findById($id);
-}
+    {
+        return $this->model->findById($id);
+    }
 
     public function paginate($page, $search, $min, $max, $status, $deleted, $limit)
     {
@@ -55,17 +50,17 @@ class ProductService
 
     private function uploadImage($file, $id)
     {
-        $dir = __DIR__ . "/../../public/uploads/products";
+
+        $dir = __DIR__ . "/../../public/Images/uploads/products";
 
         if (!is_dir($dir)) mkdir($dir, 0755, true);
 
-        $ext = 'png';
-        $name = $id . "." . $ext;
+        $name = "products" . $id . ".png";
 
-        $path = $dir . $name;
+        $path = $dir . '/' . $name;
 
         move_uploaded_file($file['tmp_name'], $path);
 
-        return "/uploads/products/{$name}";
+        return "/Images/uploads/products/{$name}";
     }
 }

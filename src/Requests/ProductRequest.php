@@ -68,7 +68,7 @@ class ProductRequest
                 throw new Exception("SKU must be at least 3 characters");
             }
 
-            // ✅ UNIQUE CHECK
+            // UNIQUE CHECK
             $conn = Database::getInstance()->getConnection();
 
             // If updating, exclude current record
