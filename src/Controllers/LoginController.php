@@ -65,20 +65,11 @@ class LoginController
             $result = LoginService::attemptLogin(
                 $data['email'],
                 $data['password'],
-                $data['remember'] ?? false
             );
 
-            // Log result based on status
-            if ($result['status'] === 'success') {
-                Logger::info('Login successful', [
-                    'email' => $data['email']
-                ]);
-            } else {
-                Logger::warning('Login failed', [
-                    'email' => $data['email'],
-                    'message' => $result['message'] ?? 'Unknown error'
-                ]);
-            }
+            Logger::info('Login successful', [
+                'email' => $data['email']
+            ]);
 
             return new Response(json_encode([
                 'status' => 'success',
@@ -119,6 +110,8 @@ class LoginController
             // Get user info before destroying session (for logging)
             $user = $session->get('user');
 
+            $session->invalidate();
+
             if ($user) {
                 Logger::info("User logout successful", [
                     'user_id' => $user['id'] ?? null,
@@ -127,9 +120,6 @@ class LoginController
             } else {
                 Logger::warning("Logout attempted without active session");
             }
-
-            // Invalidate session (secure logout)
-            $session->invalidate();
 
             // Redirect to login page
             return new RedirectResponse('/login');

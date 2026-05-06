@@ -41,7 +41,7 @@ class DashboardController
 
             // Fallback response
             return new Response(
-                '<h1>500 - Internal Server Error</h1>',
+                "500 - Internal Server Error",
                 500
             );
         }

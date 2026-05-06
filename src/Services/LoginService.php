@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\User;
@@ -14,61 +15,44 @@ class LoginService
      */
     public static function attemptLogin(string $email, string $password, bool $remember = false): array
     {
-        try {
+        Logger::info('Login attempt started', ['email' => $email]);
 
-            Logger::info('Login attempt started', ['email' => $email]);
+        // Find user
+        $user = (new User())->findByEmail($email);
 
-            // Find user
-            $user = (new User())->findByEmail($email);
+        if (!$user) {
+            Logger::warning('Login failed - user not found', ['email' => $email]);
 
-            if (!$user) {
-                Logger::warning('Login failed - user not found', ['email' => $email]);
+            throw new Exception("User not found", 404);
+        }
 
-                throw new Exception("User not found", 404);
-            }
+        // Password check
+        if (!password_verify($password, $user['password'])) {
+            Logger::warning('Login failed - incorrect password', ['email' => $email]);
 
-            // Password check
-            if (!password_verify($password, $user['password'])) {
-                Logger::warning('Login failed - incorrect password', ['email' => $email]);
+            throw new Exception("Incorrect password", 401);
 
-                throw new Exception("Incorrect password", 401);
-            }
-
-            // Start session
-            self::startSession();
-
-            $_SESSION['user'] = [
-                'id'    => $user['id'],
-                'name'  => $user['name'],
-                'email' => $user['email'],
-                'role'  => $user['role_id']
-            ];
-
-            // Remember me
-            self::handleRememberMe($email, $remember);
 
             Logger::info('Login successful', ['user_id' => $user['id']]);
-
-            return [
-                "status"  => "success",
-                "message" => "Login successful",
-                "role"    => $user['role_id'],
-                "code"    => 200
-            ];
-
-        } catch (Exception $e) {
-
-            Logger::error('Login error', [
-                'email' => $email,
-                'error' => $e->getMessage()
-            ]);
-
-            return [
-                "status"  => "error",
-                "message" => $e->getMessage(),
-                "code"    => $e->getCode() ?: 500
-            ];
         }
+
+        // Start session
+        self::startSession();
+
+        $_SESSION['user'] = [
+            'id'    => $user['id'],
+            'name'  => $user['name'],
+            'email' => $user['email'],
+            'role'  => $user['role_id']
+        ];
+
+        // Remember me
+        self::handleRememberMe($email, $remember);
+
+        Logger::info('Login successful', ['user_id' => $user['id']]);
+        return [
+            "role" => $user['role_id']
+        ];
     }
 
     /**
@@ -86,7 +70,6 @@ class LoginService
             );
 
             return new JsonResponse($result, $result['code']);
-
         } catch (Exception $e) {
 
             Logger::error('Login execute failure', [
