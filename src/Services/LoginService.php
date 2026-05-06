@@ -32,28 +32,27 @@ class LoginService
             Logger::warning('Login failed - incorrect password', ['email' => $email]);
 
             throw new Exception("Incorrect password", 401);
-
-
         }
 
-            $_SESSION['user'] = [
-                'id'    => $user['id'],
-                'name'  => $user['name'],
-                'email' => $user['email'],
-                'role'  => $user['role_id']
-            ];
+        $_SESSION['user'] = [
+            'id'    => $user['id'],
+            'name'  => $user['name'],
+            'email' => $user['email'],
+            'role'  => $user['role_id']
+        ];
 
         // Remember me
         self::handleRememberMe($email, $remember);
 
-            Logger::info('Login successful', ['user_id' => $user['id']]);
+        Logger::info('Login successful', ['user_id' => $user['id']]);
 
-            return [
-                "status"  => "success",
-                "message" => "Login successful",
-                "role"    => $user['role_id'],
-                "code"    => 200
-            ];
+        return [
+            "status"  => "success",
+            "message" => "Login successful",
+            "role"    => $user['role_id'],
+            "user"    => $user, 
+            "code"    => 200
+        ];
     }
 
     /**

@@ -104,22 +104,13 @@ class LoginController
     {
         try {
             $session = new Session();
-            $session->start();
 
             $user = $session->get('user');
 
             $session->invalidate();
 
-            if ($user) {
-                Logger::info("User logout successful", [
-                    'user_id' => $user['id'] ?? null,
-                    'email' => $user['email'] ?? null
-                ]);
-            } else {
-                Logger::warning("Logout attempted without active session");
-            }
+           Logger::info("User logout successful");
 
-            $session->invalidate();
             return new RedirectResponse('/login');
         } catch (Exception $e) {
             Logger::error("Logout failed", [
