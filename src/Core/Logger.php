@@ -5,8 +5,9 @@ class Logger {
     // Base directory for logs
     private static $logDir = __DIR__ . '/../../storage/logs/events/';
 
-    private static function getFilePath(): string {
-        // Generates filename like: 2023-10-27_log.log
+    private static function getFilePath(): string 
+    {
+        // Generates filename
         $fileName = date("Y-m-d") . "_log.log";
         
         // Ensure the directory exists
@@ -17,7 +18,9 @@ class Logger {
         return self::$logDir . $fileName;
     }
 
-    public static function log($message, $level = 'INFO', array $context = []) {
+    // Main logging method
+    public static function log($message, $level = 'INFO', array $context = []) : void 
+    {
         $timestamp = date("Y-m-d H:i:s");
         
         // Convert context array to string if provided
@@ -28,15 +31,21 @@ class Logger {
         file_put_contents(self::getFilePath(), $entry, FILE_APPEND);
     }
 
-    public static function info($message, array $context = []) {
+    // Convenience methods for different log levels
+    public static function info($message, array $context = []): void 
+    {
         self::log($message, 'INFO', $context);
     }
 
-    public static function warning($message, array $context = []) {
+    // Convenience method for warning level
+    public static function warning($message, array $context = []): void
+    {
         self::log($message, 'WARNING', $context);
     }
 
-    public static function error($message, array $context = []) {
+    // Convenience method for error level
+    public static function error($message, array $context = []): void 
+    {
         self::log($message, 'ERROR', $context);
     }
 }

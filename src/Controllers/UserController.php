@@ -2,29 +2,24 @@
 namespace App\Controllers;
 
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Session\Session;
 use App\Services\UserService;
 use App\Core\View;
 use Exception;
-use Monolog\Handler\StreamHandler;
 use App\Models\User;
-use App\Core\Database;
 use App\Requests\RegisterRequest;
 use App\Core\Logger;
 
 class UserController {
 
     public static function index(): Response 
-{
-        $userModel = new User();    
-        $roles = $userModel->getRoles();
+    {
+        
+            $userModel = new User();
+            $roles = $userModel->getRoles();
+            $html = View::render('register', ['roles' => $roles]);
 
-        $html = View::render('register', ['roles' => $roles]);
-
-    return new Response($html);
-}
+            return new Response($html);
+    }
 
    // New method to handle user registration
    public static function register(): Response
@@ -54,7 +49,7 @@ class UserController {
                 'errors' => $errors
             ]), 400);
         }
-
+        
         $validatedData = $registerRequest->getValidatedData();
         
         $message = UserService::registerUser($validatedData); 
