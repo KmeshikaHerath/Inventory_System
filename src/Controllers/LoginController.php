@@ -48,7 +48,6 @@ class LoginController
             $result = LoginService::attemptLogin(
                 $data['email'],
                 $data['password'],
-                $data['remember'] ?? false
             );
 
             if ($result['status'] === 'success') {
@@ -88,8 +87,6 @@ class LoginController
                 ]), 401);
             }
         } catch (\Exception $e) {
-            var_dump($e->getMessage(), $e->getTraceAsString());
-            exit();
             Logger::error('Login exception occurred', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -110,6 +107,8 @@ class LoginController
             $session->start();
 
             $user = $session->get('user');
+
+            $session->invalidate();
 
             if ($user) {
                 Logger::info("User logout successful", [
