@@ -113,6 +113,10 @@ class ProductRequest
                 $allowedExt  = ['jpg', 'jpeg', 'png'];
                 $maxSize     = 2 * 1024 * 1024; // 2MB
 
+                if (!$file || empty($file['name'])) {
+                    throw new Exception("Image is required");
+                }
+
                 if ($file['error'] !== UPLOAD_ERR_OK) {
                     throw new Exception("Error uploading image");
                 }
@@ -136,6 +140,14 @@ class ProductRequest
                 if (!in_array($ext, $allowedExt)) {
                     throw new Exception("Invalid image file extension");
                 }
+            }
+
+            if (empty($data['category_id'])) {
+                throw new Exception("Category is required");
+            }
+
+            if (!is_numeric($data['category_id'])) {
+                throw new Exception("Invalid category");
             }
 
             return true;

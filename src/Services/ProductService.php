@@ -65,19 +65,6 @@ class ProductService
         // Check if old image exists
         $hasOldImage = file_exists($imagePath);
 
-        //  No new image uploaded
-        if (!$file || $file['error'] === UPLOAD_ERR_NO_FILE) {
-
-            if (!$hasOldImage) {
-                return [
-                    "status" => "error",
-                    "message" => "Image is required"
-                ];
-            }
-        }
-
-        // New image uploaded
-        else {
             // delete old image if exists
             if ($hasOldImage) {
                 unlink($imagePath);
@@ -85,8 +72,7 @@ class ProductService
 
             // upload new image
             $this->uploadImage($file, $id);
-        }
-
+        
         $result = $this->model->update($id, $data);
 
         if (!$result) {
@@ -120,7 +106,7 @@ class ProductService
     public function get($id)
     {
         return $this->model->findById($id);
-    }
+}
 
     /**
      * Paginate products list
@@ -156,7 +142,7 @@ class ProductService
 
         if (!is_dir($dir)) mkdir($dir, 0755, true);
 
-        $name = "products{$id}.png";
+        $name = "products_{$id}.png";
 
         move_uploaded_file($file['tmp_name'], "{$dir}/{$name}");
 

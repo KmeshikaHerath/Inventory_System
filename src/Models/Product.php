@@ -82,8 +82,8 @@ class Product
     public function create(array $data): int
     {
         $stmt = $this->conn->prepare("
-        INSERT INTO products (name, price, quantity, sku, description, status, created_by, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+        INSERT INTO products (name, price, quantity, sku, description, status, created_by, created_at, category_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)
     ");
 
         $stmt->execute([
@@ -93,7 +93,8 @@ class Product
             $data['sku'],
             $data['description'],
             $data['status'] ?? 'active',
-            $data['created_by']
+            $data['created_by'],
+            $data['category_id'] ?? null
         ]);
 
         return (int)$this->conn->lastInsertId();
@@ -121,43 +122,45 @@ class Product
     ) {
         $offset = ($page - 1) * $limit;
 
-        $totalSql = "SELECT COUNT(*) as total FROM products WHERE deleted_at IS NULL";
-        $stmt = $this->conn->prepare($totalSql);
-        $stmt->execute();
-        $total = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $query = "
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id 
+        WHERE p.deleted_at IS NULL ";
+
+        $params = [];
 
         $params = [];
         $conditions = [];
 
-        if (!$includeDeleted) {
-            $conditions[] = "deleted_at IS NULL";
-        }
+        $stmt = $this->conn->prepare("SELECT count(*) as total {$query}");
+        $stmt->execute();
+        $total = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         if (!empty($search)) {
-            $conditions[] = "(name LIKE :search OR sku LIKE :search)";
+            $conditions[] = "(p.name LIKE :search OR p.sku LIKE :search)";
             $params[':search'] = '%' . trim($search) . '%';
-            $totalSearch = $params[':search'];
         }
 
         if ($minPrice !== null && $minPrice !== '' && is_numeric($minPrice)) {
-            $conditions[] = "price >= :minPrice";
+            $conditions[] = "p.price >= :minPrice";
             $params[':minPrice'] = (float)$minPrice;
         }
 
         if ($maxPrice !== null && $maxPrice !== '' && is_numeric($maxPrice)) {
-            $conditions[] = "price <= :maxPrice";
+            $conditions[] = "p.price <= :maxPrice";
             $params[':maxPrice'] = (float)$maxPrice;
         }
 
-        if (!empty($status) && $status !== 'all') {
-            $conditions[] = "status = :status";
-            $params[':status'] = $status;
-        }
+        // if ($common !== null && $common !== '') {
+        //     $conditions[] = "(p.name LIKE :common OR p.sku LIKE :common)";
+        //     $params[':common'] = '%' . trim($common) . '%';
+        // }
 
-        $where = !empty($conditions) ? "WHERE " . implode(' AND ', $conditions) : "";
+        $where = !empty($conditions) ? " AND " . implode(' AND ', $conditions) : "";
 
-        $countSql = "SELECT COUNT(*) as total FROM products $where";
-        $stmt = $this->conn->prepare($countSql);
+        $query = "{$query} $where";
+        $stmt = $this->conn->prepare("SELECT COUNT(*) as total {$query}");
+
 
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
@@ -166,8 +169,10 @@ class Product
         $stmt->execute();
         $filtered = (int)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $sql = "SELECT * FROM products $where ORDER BY id ASC LIMIT :limit OFFSET :offset";
-        $stmt = $this->conn->prepare($sql);
+
+        $where = !empty($conditions) ? " AND " . implode(' AND ', $conditions) : "";
+        $query = "{$query}$where";
+        $stmt = $this->conn->prepare("SELECT p.*, c.name AS category_name {$query} ORDER BY p.id ASC LIMIT :limit OFFSET :offset");
 
         foreach ($params as $k => $v) {
             $stmt->bindValue($k, $v);
@@ -206,10 +211,6 @@ class Product
     public function delete($id)
     {
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         $stmt = $this->conn->prepare("
         UPDATE products 
         SET deleted_at = NOW() 
@@ -243,7 +244,8 @@ class Product
             description = :description,
             status = :status,
             updated_at = :updated_at,
-            updated_by = :updated_by
+            updated_by = :updated_by,
+            category_id = :category_id
         WHERE id = :id
     ");
 
@@ -256,6 +258,7 @@ class Product
             ':status' => $data['status'],
             ':updated_at' => date('Y-m-d H:i:s'),
             ':updated_by' => $data['updated_by'],
+            ':category_id' => $data['category_id'] ?? null,
             ':id' => $id
         ]);
     }
@@ -267,6 +270,14 @@ class Product
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
     ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getCategory(): array
+    {
+        $query = "SELECT id, name FROM categories";
+        $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

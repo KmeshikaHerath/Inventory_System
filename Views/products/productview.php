@@ -6,6 +6,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 
 <?php
 $permissions = $_SESSION['permissions'] ?? [];
@@ -54,6 +56,7 @@ $permissions = $_SESSION['permissions'] ?? [];
                     <th class="p-3">ID</th>
                     <th class="p-3">Image</th>
                     <th class="p-3">Name</th>
+                    <th class="p-3">Category</th>
                     <th class="p-3">SKU</th>
                     <th class="p-3">Price</th>
                     <th class="p-3">Qty</th>
@@ -104,6 +107,25 @@ $permissions = $_SESSION['permissions'] ?? [];
        transition-transform duration-300 peer-checked:translate-x-3 peer-checked:border-slate-800 cursor-pointer">
                     </label>
                 </label>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1"></label>
+                <select id="category_id" name="category_id" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none transition">
+                    <option value="" class="blur-sm">Category</option>
+                    <?php if (!empty($categories)): ?>
+
+                        <?php foreach ($categories as $category): ?>
+                            <option value="<?= htmlspecialchars($category['id']) ?>"
+                                <?= ($category['id'] == ($old_category_id ?? '')) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($category['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+
+                    <?php endif; ?>
+
+                </select>
+
             </div>
 
             <input type="file" name="image" class="w-full border p-2 mb-2">
@@ -171,7 +193,7 @@ $permissions = $_SESSION['permissions'] ?? [];
                     data: 'image_path',
                     render: function(d, type, row) {
 
-                        const img = d || `/Images/uploads/products/products${row.id}.png`;
+                        const img = d || `/Images/uploads/products/products_${row.id}.png`;
 
                         return `<img src="${img}" class="h-10 w-10 rounded">`;
                     }
@@ -179,6 +201,12 @@ $permissions = $_SESSION['permissions'] ?? [];
 
                 {
                     data: 'name'
+                },
+                {
+                    data: 'category_name',
+                    render: function(d) {
+                        return d ? d : '<span class="text-gray-400">No Category</span>';
+                    }
                 },
                 {
                     data: 'sku'
@@ -193,10 +221,13 @@ $permissions = $_SESSION['permissions'] ?? [];
                 {
                     data: 'status',
                     render: function(d, type, row) {
+                        const status = (d || '').toString().trim().toLowerCase();
+                        const label = status.charAt(0).toUpperCase() + status.slice(1);
+
                         return `
                         <button onclick="toggleStatus(${row.id})"
-                            class="${d === 'active' ? 'text-green-600' : 'text-red-600'} font-bold">
-                            ${d}
+                            class="${label === 'Active' ? 'text-blue-600' : 'text-red-600'} font-bold">
+                            ${label}
                         </button>
                     `;
                     }
@@ -213,22 +244,17 @@ $permissions = $_SESSION['permissions'] ?? [];
                         const canDelete = Array.isArray(permissions) && permissions.includes('products_delete');
 
                         if (canUpdate) {
-                            html += `
-                            <button onclick="editProduct(${row.id})"
-                                class="text-blue-600 mr-2">
-                                Edit
-                            </button>
-                        `;
+                            html += ` <button onclick="editProduct(${row.id})" class="text-blue-600 mr-2" title="Edit"> 
+                            <i class="fa fa-pencil" aria-hidden="true"></i> 
+                            </button> `;
                         }
 
                         if (canDelete) {
-                            html += `
-                            <button onclick="deleteProduct(${row.id})"
-                                class="text-red-600">
-                                Delete
-                            </button>
-                        `;
+                            html += ` <button onclick="deleteProduct(${row.id})" class="text-red-600" title="Delete"> 
+                            <i class="fa fa-trash" aria-hidden="true"></i> 
+                            </button> `;
                         }
+
 
                         return html;
                     }
@@ -275,6 +301,10 @@ $permissions = $_SESSION['permissions'] ?? [];
     $('#productForm').on('submit', function(e) {
         e.preventDefault();
 
+        if (!$('#category_id').val()) {
+            Swal.fire("Error", "Please select a category", "error");
+            return;
+        }
         const formData = new FormData(this);
 
         const id = $('#productId').val();
@@ -324,6 +354,7 @@ $permissions = $_SESSION['permissions'] ?? [];
                 $('#quantity').val(p.quantity);
                 $('#sku').val(p.sku);
                 $('#description').val(p.description);
+                $('#category_id').val(p.category_id).trigger('change');
 
                 const status = (p.status || '').toLowerCase();
 

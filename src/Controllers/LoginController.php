@@ -52,11 +52,7 @@ class LoginController
             );
 
             if ($result['status'] === 'success') {
-                // Start session if not already started
-                if (session_status() === PHP_SESSION_NONE) {
-                    session_start();
-                }
-                
+
                 // Get user data from login result
                 $user = $result['user']; // Make sure LoginService returns user array
                 
@@ -92,6 +88,8 @@ class LoginController
                 ]), 401);
             }
         } catch (\Exception $e) {
+            var_dump($e->getMessage(), $e->getTraceAsString());
+            exit();
             Logger::error('Login exception occurred', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),

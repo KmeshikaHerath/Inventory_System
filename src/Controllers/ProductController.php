@@ -9,6 +9,7 @@ use App\Services\PermissionService;
 use App\Requests\ProductRequest;
 use Exception;
 use App\Core\Logger;
+use App\Models\Product;
 
 /**
  * Class ProductController
@@ -28,9 +29,13 @@ class ProductController
     {
         Logger::info("Product index page accessed");
 
+        $ProductModel = new Product();
+        $categories = $ProductModel->getCategory(); 
+
         return new Response(
             View::render('products/productview', [
-                'permissions' => $_SESSION['permissions'] ?? []
+                'permissions' => $_SESSION['permissions'] ?? [],
+                'categories'  => $categories
             ], true)
         );
     }
