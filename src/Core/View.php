@@ -5,11 +5,11 @@ namespace App\Core;
 class View
 {
     // Method to render a view with optional data
-    public static function render($view, $data = []): string
+    public static function render($view, $data = [], $useLayout = true)
     {
-       extract($data);
+        extract($data);
 
-       // Construct the full path to the view file
+        // Construct the full path to the view file
         $file = __DIR__ . '/../../Views/' . $view . '.php';
 
         // Check if the view file exists
@@ -19,9 +19,12 @@ class View
 
         ob_start();
         include $file;
-        return ob_get_clean();
+        $content = ob_get_clean();
 
-         // load layout
-        include __DIR__ . "/../Views/layouts/main.php";
+        if ($useLayout) {
+            require __DIR__ . '/../../Views/layouts/main.php';
+        } else {
+            return $content;
+        }
     }
 }

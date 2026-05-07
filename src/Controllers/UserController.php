@@ -16,7 +16,7 @@ class UserController {
         
             $userModel = new User();
             $roles = $userModel->getRoles();
-            $html = View::render('register', ['roles' => $roles]);
+            $html = View::render('register', ['roles' => $roles], false);
 
             return new Response($html);
     }

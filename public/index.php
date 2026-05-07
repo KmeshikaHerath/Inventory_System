@@ -9,6 +9,10 @@ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 date_default_timezone_set('Asia/Colombo');
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 //Load .env file
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
 $dotenv->load();
@@ -34,20 +38,17 @@ try {
 
     // Call the controller and get the response
     $response = call_user_func_array($controller, $parameters);
-
 } catch (ResourceNotFoundException $e) {
     $response = new Response('404 Not Found', 404);
-   
 } catch (Exception $e) {
     $response = new Response('An error occurred: ' . $e->getMessage(), 500);
-    
+
     //Sends output to the browser and ends the script execution
     $response->send();
-
 } finally {
     // This always runs, even if an exception occurs
     if (isset($response)) {
         $response->prepare($request);
         $response->send();
     }
-}  
+}

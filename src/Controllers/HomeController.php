@@ -17,7 +17,7 @@ class HomeController
         $html = View::render('home', [
             'title' => 'Home Page',
             'message' => 'Welcome to the View Page!'
-        ]);
+        ], false);
 
         return new Response($html);
     }

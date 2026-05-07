@@ -6,7 +6,6 @@ use App\Core\View;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use App\Core\Logger;
-use Exception;
 
 /**
  * Class DashboardController
@@ -23,15 +22,14 @@ class DashboardController
     public static function index(): Response
     {
         try {
-            session_start();
-
+            
             if (!isset($_SESSION['user'])) {
                 return new RedirectResponse('/login');
             }
 
             $user = $_SESSION['user'];
 
-            $html = View::render('dashboard', ['user' => $user]);
+            $html = View::render('dashboard', ['user' => $user], true);
 
             return new Response($html);
         } catch (\Exception $e) {

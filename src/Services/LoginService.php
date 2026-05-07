@@ -7,6 +7,7 @@ use App\Core\Logger;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Exception;
+use App\Models\Permission;
 
 class LoginService
 {
@@ -31,13 +32,7 @@ class LoginService
             Logger::warning('Login failed - incorrect password', ['email' => $email]);
 
             throw new Exception("Incorrect password", 401);
-
-
-            Logger::info('Login successful', ['user_id' => $user['id']]);
         }
-
-        // Start session
-        self::startSession();
 
         $_SESSION['user'] = [
             'id'    => $user['id'],
@@ -50,8 +45,13 @@ class LoginService
         self::handleRememberMe($email, $remember);
 
         Logger::info('Login successful', ['user_id' => $user['id']]);
+
         return [
-            "role" => $user['role_id']
+            "status"  => "success",
+            "message" => "Login successful",
+            "role"    => $user['role_id'],
+            "user"    => $user, 
+            "code"    => 200
         ];
     }
 
