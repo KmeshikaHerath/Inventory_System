@@ -7,6 +7,7 @@ use App\Controllers\UserController;
 use App\Controllers\LoginController;
 use App\Controllers\DashboardController;
 use App\Controllers\ProductController;
+use App\Controllers\ReportController;
 
 $routes = new RouteCollection();
 
@@ -44,4 +45,13 @@ $routes->add('get_product', new Route('/products/get',['_controller' => [Product
 $routes->add('update_product', new Route('/products/update',['_controller' => [ProductController::class, 'update']],[],[],'',[],['POST']));
 
 $routes->add('restore_product',new Route('/products/restore',['_controller' => [ProductController::class, 'restore']],[],[],'',[],['POST']));
+
+$routes->add('report', new Route('/report',['_controller' => [ReportController::class, 'index']],[],[],'',[],['GET']));
+
+$routes->add('report_filter', new Route('/report/filter',['_controller' => [ReportController::class, 'filter']],[],[],'',[],['GET']));
+
+$routes->add('report_csv', new Route('/report/export/csv',['_controller' => [ReportController::class, 'exportCSV']],[],[],'',[],['GET']));
+
+$routes->add('report_pdf', new Route('/report/export/pdf',['_controller' => [ReportController::class, 'exportPDF']],[],[],'',[],['GET']));
+
 return $routes;

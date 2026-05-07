@@ -281,4 +281,29 @@ class Product
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getReportProducts($filters = [])
+    {
+        $query = "SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE 1=1";
+        $params = [];
+
+        if (!empty($filters['category_id'])) {
+            $query .= " AND p.category_id = :category_id";
+            $params[':category_id'] = $filters['category_id'];
+        }
+
+        if (!empty($filters['sku'])) {
+            $query .= " AND p.sku LIKE :sku";
+            $params[':sku'] = '%' . $filters['sku'] . '%';
+        }
+    
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $query .= " AND p.status = :status";
+            $params[':status'] = $filters['status'];
+        }
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

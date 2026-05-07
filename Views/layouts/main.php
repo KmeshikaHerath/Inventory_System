@@ -53,8 +53,7 @@
                 </li>
 
                 <li>
-                    <a href="/reports"
-                        class="block p-2 hover:bg-gray-200 rounded">
+                    <a href="/report" class="block p-2 hover:bg-gray-200 rounded">
                         📈 Reports
                     </a>
                 </li>
@@ -69,39 +68,39 @@
 
     </div>
 
-   <!-- JS -->
-<script>
-$(document).ready(function () {
+    <!-- JS -->
+    <script>
+        $(document).ready(function() {
 
-    $("#userBtn").on("click", function (e) {
-        e.stopPropagation();
-        $("#dropdown").toggleClass("hidden");
-    });
+            $("#userBtn").on("click", function(e) {
+                e.stopPropagation();
+                $("#dropdown").toggleClass("hidden");
+            });
 
-    $(document).on("click", function () {
-        $("#dropdown").addClass("hidden");
-    });
+            $(document).on("click", function() {
+                $("#dropdown").addClass("hidden");
+            });
 
-    // Logout (SAFE FIX - always works)
-    $(document).on("click", "#logoutBtn", function (e) {
-        e.preventDefault();
+            // Logout (SAFE FIX - always works)
+            $(document).on("click", "#logoutBtn", function(e) {
+                e.preventDefault();
 
-        Swal.fire({
-            title: 'Logout?',
-            text: "Are you sure you want to logout?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Logout',
-            cancelButtonText: 'Stay'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = "/logout";
-            }
+                Swal.fire({
+                    title: 'Logout?',
+                    text: "Are you sure you want to logout?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Logout',
+                    cancelButtonText: 'Stay'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "/logout";
+                    }
+                });
+            });
+
         });
-    });
-
-});
-</script>
+    </script>
 
 </body>
 
