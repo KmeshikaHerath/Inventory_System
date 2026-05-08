@@ -282,28 +282,37 @@ class Product
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getReportProducts($filters = [])
+    public function getProducts(array $params, string $baseQuery, int $limit, int $offset): array
     {
-        $query = "SELECT p.*, c.name AS category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE 1=1";
-        $params = [];
+        $sql = "SELECT p.*, c.name AS category_name
+                $baseQuery
+                ORDER BY p.id ASC
+                LIMIT :limit OFFSET :offset";
 
-        if (!empty($filters['category_id'])) {
-            $query .= " AND p.category_id = :category_id";
-            $params[':category_id'] = $filters['category_id'];
+        $stmt = $this->conn->prepare($sql);
+
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
         }
 
-        if (!empty($filters['sku'])) {
-            $query .= " AND p.sku LIKE :sku";
-            $params[':sku'] = '%' . $filters['sku'] . '%';
-        }
-    
-        if (isset($filters['status']) && $filters['status'] !== '') {
-            $query .= " AND p.status = :status";
-            $params[':status'] = $filters['status'];
-        }
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute($params);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getFilteredCount(array $params, string $baseQuery): int
+    {
+        $stmt = $this->conn->prepare("SELECT COUNT(*) as total $baseQuery");
+        $stmt->execute($params);
+
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    }
+
+    public function getTotalCount(): int
+    {
+        return (int) $this->conn->query("SELECT COUNT(*) FROM products")->fetchColumn();
     }
 }

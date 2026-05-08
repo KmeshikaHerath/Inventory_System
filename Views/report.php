@@ -275,7 +275,7 @@
         let status = $('#status').val();
 
         window.location.href =
-            `/Inventory_System/report/export/csv?category_id=${encodeURIComponent(category_id)}&sku=${encodeURIComponent(sku)}&status=${encodeURIComponent(status)}`;
+           `/report/export/csv?category_id=${encodeURIComponent(category_id)}&sku=${encodeURIComponent(sku)}&status=${encodeURIComponent(status)}`;
 
     }
 
@@ -287,8 +287,7 @@
         let sku = $('#sku').val();
         let status = $('#status').val();
 
-        window.location.href =
-            `/Inventory_System/report/export/pdf?category_id=${encodeURIComponent(category_id)}&sku=${encodeURIComponent(sku)}&status=${encodeURIComponent(status)}`;
-
+       window.location.href =
+           `/report/export/pdf?category_id=${encodeURIComponent(category_id)}&sku=${encodeURIComponent(sku)}&status=${encodeURIComponent(status)}`;
     }
 </script>
