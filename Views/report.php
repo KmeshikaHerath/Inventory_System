@@ -110,6 +110,13 @@
             <!-- BUTTONS -->
             <div class="flex flex-wrap gap-2 justify-between mt-6">
 
+                <!-- CLOSE -->
+                <button onclick="closeFilterModal()"
+                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Close
+                </button>
+
+
                 <button type="submit"
                     class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
                     Apply Filter
@@ -117,25 +124,19 @@
 
                 <button type="button"
                     onclick="downloadCSV()"
-                    class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     CSV
                 </button>
 
                 <button type="button"
                     onclick="downloadPDF()"
-                    class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     PDF
                 </button>
 
             </div>
 
         </form>
-
-        <!-- CLOSE -->
-        <button onclick="closeFilterModal()"
-            class="mt-4 text-gray-500 hover:text-gray-700">
-            Close
-        </button>
 
     </div>
 </div>
@@ -274,9 +275,17 @@
         let sku = $('#sku').val();
         let status = $('#status').val();
 
-        window.location.href =
-           `/report/export/csv?category_id=${encodeURIComponent(category_id)}&sku=${encodeURIComponent(sku)}&status=${encodeURIComponent(status)}`;
+        const url =
+            `/report/export/csv?category_id=${encodeURIComponent(category_id)}&sku=${encodeURIComponent(sku)}&status=${encodeURIComponent(status)}`;
 
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'report.csv';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     /* ================= EXPORT PDF ================= */
@@ -287,7 +296,17 @@
         let sku = $('#sku').val();
         let status = $('#status').val();
 
-       window.location.href =
-           `/report/export/pdf?category_id=${encodeURIComponent(category_id)}&sku=${encodeURIComponent(sku)}&status=${encodeURIComponent(status)}`;
+        const url =
+            `/report/export/pdf?category_id=${encodeURIComponent(category_id)}&sku=${encodeURIComponent(sku)}&status=${encodeURIComponent(status)}`;
+
+        // Create temporary download button/link
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = 'report.pdf';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 </script>

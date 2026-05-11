@@ -4,152 +4,188 @@ namespace App\Controllers;
 
 use App\Services\ReportService;
 use App\Core\View;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use App\Requests\ReportRequest;
 use App\Core\Logger;
 use App\Models\Product;
-use Dompdf\Dompdf;
+use Exception;
 
+/**
+ * Class ReportController
+ *
+ * Handles report-related operations such as:
+ * - Displaying report page
+ * - Filtering report data (DataTable)
+ * - Exporting CSV reports
+ * - Exporting PDF reports
+ */
 class ReportController
 {
+    /**
+     * Show report index page with categories.
+     *
+     * @return Response
+     */
     public static function index(): Response
     {
-        Logger::info("Report index page accessed");
+        try {
+            Logger::info("Report index page accessed");
 
-        $productModel = new Product();
-        $categories = $productModel->getCategory();
+            $productModel = new Product();
+            $categories = $productModel->getCategory();
 
-        return new Response(
-            View::render('report', [
-                'categories' => $categories
-            ])
-        );
+            return new Response(
+                View::render('report', [
+                    'categories' => $categories
+                ])
+            );
+        } catch (\Throwable $e) {
+            Logger::error("Error in ReportController@index", [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            return new Response("Something went wrong", 500);
+        }
     }
 
+    /**
+     * Fetch filtered report data for DataTables.
+     *
+     * @return Response JSON response containing paginated data
+     */
     public static function filter(): Response
     {
-        $service = new ReportService();
+        try {
+            $service = new ReportService();
 
-        $draw = (int)($_GET['draw'] ?? 1);
-        $start = (int)($_GET['start'] ?? 0);
-        $length = (int)($_GET['length'] ?? 10);
+            $draw = (int)($_GET['draw'] ?? 1);
+            $start = (int)($_GET['start'] ?? 0);
+            $length = (int)($_GET['length'] ?? 10);
 
-        $search = $_GET['search']['value'] ?? '';
+            $search = $_GET['search']['value'] ?? '';
 
-        $filters = ReportRequest::validateFilters($_GET);
+            $filters = ReportRequest::validateFilters($_GET);
 
-        $result = $service->getReportProductsDataTable(
-            $filters,
-            $start,
-            $length,
-            $search
-        );
+            $result = $service->getReportProductsDataTable(
+                $filters,
+                $start,
+                $length,
+                $search
+            );
 
-        return new Response(
-            json_encode([
-                "draw" => $draw,
-                "recordsTotal" => $result['recordsTotal'],
-                "recordsFiltered" => $result['recordsFiltered'],
-                "data" => $result['data']
-            ]),
-            200,
-        );
-    }
-    /*
-        * New method to export filtered report data as CSV
-*/
-    public static function exportCSV(): BinaryFileResponse
-    {
-        $filters = ReportRequest::validateFilters($_GET);
-        $service = new ReportService();
-        $result = $service->getReportProductsDataTable($filters, 0, PHP_INT_MAX, '');
-        $products = $result['data'];
-
-        $projectDir = dirname(__DIR__, 2);
-        $directory = $projectDir . '/public/Download_files/csv';
-
-        if (!is_dir($directory)) {
-            mkdir($directory, 0777, true);
-        }
-
-        $filename = 'report_' . date('Y-m-d_H-i-s') . '_' . uniqid() . '.csv';
-        $filePath = $directory . '/' . $filename;
-
-        $csv = fopen($filePath, 'w');
-
-        fputcsv($csv, ['ID', 'Name', 'Category', 'SKU', 'Price', 'Quantity', 'Status']);
-
-        foreach ($products as $product) {
-            fputcsv($csv, [
-                $product['id'],
-                $product['name'],
-                $product['category_name'],
-                $product['sku'],
-                $product['price'],
-                $product['quantity'],
-                $product['status']
+            Logger::info("Report filter executed", [
+                'filters' => $filters,
+                'search' => $search
             ]);
+
+            return new Response(
+                json_encode([
+                    "draw" => $draw,
+                    "recordsTotal" => $result['recordsTotal'],
+                    "recordsFiltered" => $result['recordsFiltered'],
+                    "data" => $result['data']
+                ]),
+                200,
+                ['Content-Type' => 'application/json']
+            );
+        } catch (Exception $e) {
+            Logger::error("Error in ReportController@filter", [
+                'message' => $e->getMessage()
+            ]);
+
+            return new Response(json_encode([
+                "error" => "Failed to load data"
+            ]), 500);
         }
-
-        fclose($csv);
-
-        return new BinaryFileResponse($filePath, 200, [
-            'Content-Type' => 'text/csv',
-        ], true, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
     }
 
+    /**
+     * Export report data as CSV file.
+     *
+     * @return BinaryFileResponse CSV file download response
+     */
+    public static function exportCSV(): Response
+    {
+        try {
+            $filters = ReportRequest::validateFilters($_GET);
+            $search = $_GET['search'] ?? '';
+
+            $service = new ReportService();
+            $filePath = $service->generateCsvReport($filters, $search);
+
+            Logger::info("CSV exported successfully", [
+                'file' => $filePath
+            ]);
+
+            return new Response(
+                $filePath,
+                200,
+                [
+                    'Content-Type' => 'text/plain'
+                ]
+            );
+        } catch (Exception $e) {
+            Logger::error("CSV export failed", [
+                'message' => $e->getMessage()
+            ]);
+
+            return new Response(
+                json_encode([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]),
+                500,
+                [
+                    'Content-Type' => 'application/json'
+                ]
+            );
+        }
+    }
+
+    /**
+     * Export report data as PDF file.
+     *
+     * @return BinaryFileResponse PDF file download response
+     */
     public static function exportPDF(): Response
     {
-        $filters = ReportRequest::validateFilters($_GET);
+        try {
+            $filters = ReportRequest::validateFilters($_GET);
+            $search = $_GET['search'] ?? '';
 
-        $service = new ReportService();
+            $service = new ReportService();
+            $filePath = $service->generatePdfReport($filters, $search);
 
-        $result = $service->getReportProductsDataTable(
-            $filters,
-            0,
-            PHP_INT_MAX,
-            ''
-        );
+            Logger::info("PDF exported successfully", [
+                'file' => $filePath
+            ]);
 
-        $products = $result['data'];
+            return new Response(
+                $filePath,
+                200,
+                [
+                    'Content-Type' => 'text/plain'
+                ]
+            );
+        } catch (Exception $e) {
+            Logger::error("PDF export failed", [
+                'message' => $e->getMessage()
+            ]);
 
-        $html = View::render('report_pdf', [
-            'products' => $products
-        ], true);
-
-        $dompdf = new Dompdf();
-
-        // $dompdf->loadHtml($html);
-        $dompdf->loadHtml('hello world');
-
-        $dompdf->setPaper('A4', 'landscape');
-
-        $dompdf->render();
-       
-
-        // Create folder path
-        $projectDir = dirname(__DIR__, 2);
-        $directory = $projectDir . '/public/Download_files/pdf';
-
-        if (!is_dir($directory)) {
-            mkdir($directory, 0777, true);
+            return new Response(
+                json_encode([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ]),
+                500,
+                [
+                    'Content-Type' => 'application/json'
+                ]
+            );
         }
-
-        // File name
-        $filename = 'report_' . date('Y-m-d_H-i-s') . '_' . uniqid() . '.pdf';
-
-        $filePath = $directory . '/' . $filename;
- 
-        // Save PDF file to server
-        file_put_contents($filePath, $dompdf->output());
-var_dump($filePath, $dompdf->output());die;
-        // Return download response (optional)
-        return new BinaryFileResponse($filePath, 200, [
-            'Content-Type' => 'application/pdf',
-        ], true, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
     }
 }
