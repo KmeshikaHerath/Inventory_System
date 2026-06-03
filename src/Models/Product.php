@@ -281,4 +281,38 @@ class Product
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getProducts(array $params, string $baseQuery, int $limit, int $offset): array
+    {
+        $sql = "SELECT p.*, c.name AS category_name
+                $baseQuery
+                ORDER BY p.id ASC
+                LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->conn->prepare($sql);
+
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getFilteredCount(array $params, string $baseQuery): int
+    {
+        $stmt = $this->conn->prepare("SELECT COUNT(*) as total $baseQuery");
+        $stmt->execute($params);
+
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+    }
+
+    public function getTotalCount(): int
+    {
+        return (int) $this->conn->query("SELECT COUNT(*) FROM products")->fetchColumn();
+    }
 }

@@ -6,3 +6,4 @@ package-lock.json
 /Storage/logs/events/*.log
 .env
 public/Images/uploads/
+public/Download_files/

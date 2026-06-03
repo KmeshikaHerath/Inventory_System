@@ -25,14 +25,25 @@ $permissions = $_SESSION['permissions'] ?? [];
 
     <!-- HEADER -->
     <div class="flex justify-between items-center mb-6">
+
         <h1 class="text-3xl font-bold">Products</h1>
 
         <?php if (in_array('products_create', $permissions)): ?>
-            <button onclick="openCreateModal()"
-                class="bg-blue-600 text-white px-4 py-2 rounded">
-                + Add Product
-            </button>
+            <div class="flex gap-2">
+
+                <button onclick="openCsvModal()"
+                    class="bg-blue-600 text-white px-4 py-2 rounded">
+                    CSV Upload
+                </button>
+
+                <button onclick="openCreateModal()"
+                    class="bg-blue-600 text-white px-4 py-2 rounded">
+                    Add Product
+                </button>
+
+            </div>
         <?php endif; ?>
+
     </div>
 
     <!-- FILTERS -->
@@ -69,6 +80,8 @@ $permissions = $_SESSION['permissions'] ?? [];
 </div>
 
 <!-- MODAL -->
+
+<!-- add product modal -->
 <div id="productModal"
     class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
 
@@ -158,11 +171,95 @@ $permissions = $_SESSION['permissions'] ?? [];
     </div>
 </div>
 
+<!-- csv upload modal -->
+<div id="csvModal"
+    class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+
+    <div class="bg-white p-6 rounded shadow w-full max-w-md">
+
+        <h2 class="text-xl font-bold mb-4">
+            Upload CSV File
+        </h2>
+
+        <form id="csvUploadForm" enctype="multipart/form-data">
+
+            <input
+                type="file"
+                name="csv_file"
+                accept=".csv"
+                class="w-full border p-2 mb-4"
+                required>
+
+            <div class="mt-1.5 text-xs text-gray-500">
+                Please upload a CSV file with the following example:
+                <a href="example_file/product_example_file.csv" download class="text-blue-600 underline font-medium hover:text-blue-700 transition-colors">
+                    download this Example CSV Template
+                </a>.
+            </div>
+
+            <input type="hidden" name="status" id="statusHidden" value="active">
+
+            <div class="flex items-center gap-2 mb-2">
+                <label class="font-medium">Status</label>
+
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input id="statusToggle" type="checkbox"
+                        class="peer appearance-none w-10 h-5 bg-slate-100 rounded-full
+       checked:bg-blue-600 cursor-pointer transition-colors duration-300" checked>
+
+                    <label for="statusToggle"
+                        class="absolute top-0 left-0 w-5 h-5 bg-white rounded-full border border-slate-300 shadow-sm
+       transition-transform duration-300 peer-checked:translate-x-3 peer-checked:border-slate-800 cursor-pointer">
+                    </label>
+                </label>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1"></label>
+                <select id="category_id" name="category_id" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400 outline-none transition">
+                    <option value="" class="blur-sm">Category</option>
+                    <?php if (!empty($categories)): ?>
+
+                        <?php foreach ($categories as $category): ?>
+                            <option value="<?= htmlspecialchars($category['id']) ?>"
+                                <?= ($category['id'] == ($old_category_id ?? '')) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($category['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+
+                    <?php endif; ?>
+
+                </select>
+
+            </div>
+
+            <div class="flex justify-end gap-2">
+
+                <button
+                    type="button"
+                    onclick="closeCsvModal()"
+                    class="px-4 py-2 text-red-500 border border-red-500 rounded hover:bg-red-50">
+                    Close
+                </button>
+
+                <button
+                    type="submit"
+                    class="bg-blue-600 text-white px-4 py-2 rounded">
+                    Upload
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
 <script>
     /* ================= DATA TABLE ================= */
 
     $(document).ready(function() {
-
 
         $('#statusToggle').on('change', function() {
             $('#statusHidden').val(
@@ -296,6 +393,15 @@ $permissions = $_SESSION['permissions'] ?? [];
         $('input[type="file"]').val('');
     }
 
+    function openCsvModal() {
+        $('#csvModal').removeClass('hidden').addClass('flex');
+    }
+
+    function closeCsvModal() {
+        $('#csvModal').removeClass('flex').addClass('hidden');
+        $('#csvUploadForm')[0].reset();
+    }
+
     /* ================= SAVE ================= */
 
     $('#productForm').on('submit', function(e) {
@@ -399,4 +505,60 @@ $permissions = $_SESSION['permissions'] ?? [];
                 });
         });
     }
+
+    $('#csvUploadForm').on('submit', function(e) {
+
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        Swal.fire({
+            title: 'Uploading...',
+            text: 'Please wait',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        fetch('/products/csv-upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(res => {
+
+                Swal.close();
+
+                if (res.status === 'success') {
+
+                    closeCsvModal();
+
+                    table.ajax.reload();
+
+                    Swal.fire(
+                        'Success',
+                        res.message,
+                        'success'
+                    );
+
+                } else {
+
+                    Swal.fire(
+                        'Error',
+                        res.message,
+                        'error'
+                    );
+                }
+            })
+            .catch(() => {
+
+                Swal.fire(
+                    'Error',
+                    'Upload failed',
+                    'error'
+                );
+            });
+
+    });
 </script>
