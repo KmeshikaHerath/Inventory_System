@@ -148,4 +148,48 @@ class ProductService
 
         return "/Images/uploads/products/{$name}";
     }
+
+    /**
+ * Import products from CSV file
+ *
+ * @param array $file Uploaded CSV file
+ * @return array
+ * @throws Exception
+ */
+public function csvUpload(array $file): array
+{
+if (!isset($file['tmp_name']) || empty($file['tmp_name'])) {
+        throw new Exception('No file selected');
+    }
+
+    $csvFile = fopen($file['tmp_name'], 'r');
+
+    if (!$csvFile) {
+        throw new Exception('Unable to open CSV file');
+    }
+
+    // Skip header row
+    fgetcsv($csvFile);
+
+    while (($row = fgetcsv($csvFile)) !== false) {
+
+        $data = [
+            'name'        => $row[0] ?? '',
+            'price'       => $row[1] ?? 0,
+            'quantity'    => $row[2] ?? 0,
+            'sku'         => $row[3] ?? '',
+            'category_id' => $row[4] ?? null,
+            'created_by'  => $_SESSION['user_id'] ?? null,
+        ];
+
+        $this->model->create($data);
+    }
+
+    fclose($csvFile);
+
+    return [
+        'status'  => 'success',
+        'message' => 'CSV Imported Successfully'
+    ];
+}
 }

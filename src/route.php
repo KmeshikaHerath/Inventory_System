@@ -54,4 +54,6 @@ $routes->add('report_csv', new Route('/report/export/csv',['_controller' => [Rep
 
 $routes->add('report_pdf', new Route('/report/export/pdf',['_controller' => [ReportController::class, 'exportPDF']],[],[],'',[],['GET']));
 
+$routes->add('products_csv_upload',new Route('/products/csv-upload',['_controller' => [ProductController::class, 'csvUpload']],[],[],'',[],['POST']));
+
 return $routes;

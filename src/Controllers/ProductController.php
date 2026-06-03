@@ -30,7 +30,7 @@ class ProductController
         Logger::info("Product index page accessed");
 
         $ProductModel = new Product();
-        $categories = $ProductModel->getCategory(); 
+        $categories = $ProductModel->getCategory();
 
         return new Response(
             View::render('products/productview', [
@@ -245,6 +245,47 @@ class ProductController
                 "status" => "error",
                 "message" => $e->getMessage()
             ]), 500);
+        }
+    }
+
+    /**
+     * Upload CSV and import products
+     *
+     * @return Response
+     */
+    public static function csvUpload(): Response
+    {
+        try {
+
+            if (!PermissionService::can('products_create')) {
+                throw new Exception('Unauthorized', 403);
+            }
+
+            $service = new ProductService();
+
+            $result = $service->csvUpload($_FILES['csv_file'] ?? []);
+
+            Logger::info('CSV products imported', [
+                'user_id' => $_SESSION['user_id']
+            ]);
+
+            return new Response(json_encode([
+                "status" => "success",
+                "data" => $result
+            ]), 200);
+        } catch (Exception $e) {
+
+            Logger::error('CSV import failed', [
+                'error' => $e->getMessage()
+            ]);
+
+            return new Response(
+                json_encode([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ]),
+                400
+            );
         }
     }
 }
